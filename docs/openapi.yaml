@@ -1,0 +1,422 @@
+openapi: 3.0.3
+info:
+  title: spectra-api API
+  version: 2.7.30
+  description: Generated from the database structure and the endpoint definitions.
+servers:
+  - url: http://localhost:6003
+paths:
+  /api/getalldaysslotsofbranch:
+    get:
+      tags:
+        - Observed
+      summary: GET /api/getalldaysslotsofbranch
+      description: Documented automatically from 1 observed request(s). Only the statuses and parameters that were actually seen are listed.
+      operationId: get_api_getalldaysslotsofbranch
+      parameters:
+        - name: branchid
+          in: query
+          required: false
+          description: Seen in 1 of 1 request(s). Required or optional cannot be known from observed requests.
+          schema:
+            type: integer
+        - name: categoryid
+          in: query
+          required: false
+          description: Seen in 1 of 1 request(s). Required or optional cannot be known from observed requests.
+          schema:
+            type: string
+        - name: appointmentdate
+          in: query
+          required: false
+          description: Seen in 1 of 1 request(s). Required or optional cannot be known from observed requests.
+          schema:
+            type: string
+            format: date
+        - name: appointmentaheaddays
+          in: query
+          required: false
+          description: Seen in 1 of 1 request(s). Required or optional cannot be known from observed requests.
+          schema:
+            type: integer
+        - name: requiredslots
+          in: query
+          required: false
+          description: Seen in 1 of 1 request(s). Required or optional cannot be known from observed requests.
+          schema:
+            type: integer
+        - name: transactionid
+          in: query
+          required: false
+          description: Seen in 1 of 1 request(s). Required or optional cannot be known from observed requests.
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Observed 1 time(s).
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  responseCode:
+                    type: integer
+                  status:
+                    type: string
+                  message:
+                    type: string
+                  transactionID:
+                    type: string
+                  data:
+                    type: array
+                    items: {}
+                    description: Always empty in the observed responses (item structure unknown).
+                required:
+                  - responseCode
+                  - status
+                  - message
+                  - transactionID
+                  - data
+      security:
+        - Authorization: []
+          SID: []
+  /api/getbranchlistbycategory:
+    get:
+      tags:
+        - Observed
+      summary: GET /api/getbranchlistbycategory
+      description: Documented automatically from 5 observed request(s). Only the statuses and parameters that were actually seen are listed.
+      operationId: get_api_getbranchlistbycategory
+      parameters:
+        - name: categoryid
+          in: query
+          required: false
+          description: Seen in 5 of 5 request(s). Required or optional cannot be known from observed requests.
+          schema:
+            type: string
+        - name: lang
+          in: query
+          required: false
+          description: Seen in 5 of 5 request(s). Required or optional cannot be known from observed requests.
+          schema:
+            type: string
+        - name: transactionid
+          in: query
+          required: false
+          description: Seen in 5 of 5 request(s). Required or optional cannot be known from observed requests.
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Observed 5 time(s).
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  responseCode:
+                    type: integer
+                  status:
+                    type: string
+                  message:
+                    type: string
+                  transactionID:
+                    type: string
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        branchID:
+                          type: string
+                          nullable: true
+                        langCode:
+                          type: string
+                        regionid:
+                          type: integer
+                        categoryid:
+                          type: string
+                        slotDetail:
+                          type: object
+                          properties:
+                            slotID:
+                              nullable: true
+                              description: Only null was observed (type unknown).
+                            slotDate:
+                              type: string
+                            startTime:
+                              type: string
+                            endTime:
+                              type: string
+                          required:
+                            - slotID
+                            - slotDate
+                            - startTime
+                            - endTime
+                        branchTranslations:
+                          type: object
+                          properties:
+                            en:
+                              type: string
+                            fr:
+                              type: string
+                          required:
+                            - en
+                        branchAddressTranslations:
+                          type: object
+                          properties:
+                            en:
+                              type: string
+                      required:
+                        - branchID
+                        - langCode
+                        - regionid
+                        - categoryid
+                        - slotDetail
+                        - branchTranslations
+                        - branchAddressTranslations
+                required:
+                  - responseCode
+                  - status
+                  - message
+                  - transactionID
+                  - data
+      security:
+        - SID: []
+          Authorization: []
+  /api/getnearestbranches:
+    get:
+      tags:
+        - Observed
+      summary: GET /api/getnearestbranches
+      description: Documented automatically from 3 observed request(s). Only the statuses and parameters that were actually seen are listed.
+      operationId: get_api_getnearestbranches
+      parameters:
+        - name: lat
+          in: query
+          required: false
+          description: Seen in 3 of 3 request(s). Required or optional cannot be known from observed requests.
+          schema:
+            type: integer
+        - name: long
+          in: query
+          required: false
+          description: Seen in 3 of 3 request(s). Required or optional cannot be known from observed requests.
+          schema:
+            type: integer
+        - name: categoryid
+          in: query
+          required: false
+          description: Seen in 3 of 3 request(s). Required or optional cannot be known from observed requests.
+          schema:
+            type: integer
+        - name: transactionid
+          in: query
+          required: false
+          description: Seen in 3 of 3 request(s). Required or optional cannot be known from observed requests.
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Observed 3 time(s).
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  responseCode:
+                    type: integer
+                  status:
+                    type: string
+                  message:
+                    type: string
+                  transactionID:
+                    type: string
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        clientid:
+                          type: integer
+                          format: int32
+                          nullable: true
+                        branchID:
+                          type: string
+                          nullable: true
+                        branchTitle:
+                          type: string
+                          nullable: true
+                        branchCode:
+                          type: string
+                          nullable: true
+                        encbranchCode:
+                          type: string
+                        address:
+                          type: string
+                          nullable: true
+                        branchStartTime:
+                          type: string
+                        branchEndTime:
+                          type: string
+                        contactNo:
+                          type: string
+                        resultant:
+                          type: string
+                        futureDaysForAppointment:
+                          type: integer
+                          nullable: true
+                          format: int32
+                        latitude:
+                          type: number
+                          nullable: true
+                        longitude:
+                          type: number
+                          nullable: true
+                        distanceInKM:
+                          type: number
+                          nullable: true
+                        langCode:
+                          type: string
+                        regionid:
+                          type: integer
+                        categoryid:
+                          type: string
+                        branchTranslations:
+                          type: object
+                          properties:
+                            en:
+                              type: string
+                            fr:
+                              type: string
+                          required:
+                            - en
+                        branchAddressTranslations:
+                          type: object
+                          properties:
+                            en:
+                              type: string
+                        slotDetail:
+                          type: object
+                          properties:
+                            slotID:
+                              nullable: true
+                              description: Only null was observed (type unknown).
+                            slotDate:
+                              type: string
+                            startTime:
+                              type: string
+                            endTime:
+                              type: string
+                          required:
+                            - slotID
+                            - slotDate
+                            - startTime
+                            - endTime
+                        status:
+                          type: integer
+                          format: int32
+                        holiday:
+                          type: string
+                        categoryActive:
+                          type: integer
+                          format: int32
+                        currentTime:
+                          type: string
+                          nullable: true
+                        branchSlots:
+                          type: array
+                          items: {}
+                          description: Always empty in the observed responses (item structure unknown).
+                        categoryInfo:
+                          type: object
+                          properties:
+                            categoryname:
+                              type: string
+                            estwaittime:
+                              type: integer
+                              format: int32
+                              nullable: true
+                            positionInQueue:
+                              type: integer
+                              format: int32
+                              nullable: true
+                          required:
+                            - categoryname
+                            - estwaittime
+                            - positionInQueue
+                          nullable: true
+                      required:
+                        - clientid
+                        - branchID
+                        - branchTitle
+                        - branchCode
+                        - encbranchCode
+                        - address
+                        - branchStartTime
+                        - branchEndTime
+                        - contactNo
+                        - resultant
+                        - futureDaysForAppointment
+                        - latitude
+                        - longitude
+                        - distanceInKM
+                        - langCode
+                        - regionid
+                        - categoryid
+                        - branchTranslations
+                        - branchAddressTranslations
+                        - slotDetail
+                        - status
+                        - holiday
+                        - categoryActive
+                        - currentTime
+                        - branchSlots
+                        - categoryInfo
+                required:
+                  - responseCode
+                  - status
+                  - message
+                  - transactionID
+                  - data
+      security:
+        - Authorization: []
+          SID: []
+components:
+  securitySchemes:
+    Authorization:
+      type: apiKey
+      in: header
+      name: Authorization
+    SID:
+      type: apiKey
+      in: header
+      name: SID
+  schemas:
+    Envelope:
+      type: object
+      properties:
+        responseCode:
+          type: integer
+          example: 200
+        status:
+          type: string
+          example: Success
+        message:
+          type: string
+          example: Data successfully fetched
+        transactionID:
+          type: string
+      required:
+        - responseCode
+        - status
+        - message
+        - transactionID
+    TranslationMap:
+      type: object
+      description: Language code -> translated text.
+      additionalProperties:
+        type: string
+      example:
+        en: Silver
+        sp: Plata

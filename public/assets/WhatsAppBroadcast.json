@@ -1,0 +1,31 @@
+{
+    "clientId": 999,
+    "branchId": "{0}",
+    "isReply": "{1}",
+    "gateway_id": 55,
+    "gateway_name": "WhatsApp_CloudAPI",
+    "messaging_product": "whatsapp",
+    "recipient_type": "individual",
+    "to": "{2}",
+    "type": "template",
+    "template": {
+      "name": "{3}",
+      "language": {
+        "code": "en"
+      },
+      "components": [
+        {
+          "type": "body",
+          "parameters": [
+            {
+              "type": "text",
+              "text": "{4}"
+            }
+          ]
+        }
+      ]
+    },
+    "isTicketReprint": false,
+    "ticket_details": {},
+    "state_id": "{5}"
+  }

@@ -1,0 +1,12 @@
+node_modules
+storage
+logs
+*.rar
+*.zip
+*.sql
+.env
+*copy.js
+token.json
+credentials.json
+*.key
+*.md

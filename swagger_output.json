@@ -1,0 +1,7687 @@
+{
+	"swagger": "2.0",
+	"info": {
+		"title": "Spectra API Node Documentation",
+		"description": "Swagger documentation with SID and Authorization token",
+		"version": "1.0.0"
+	},
+	"host": "localhost:3001",
+	"basePath": "",
+	"schemes": ["http", "https"],
+	"securityDefinitions": {
+		"SIDHeader": {
+			"type": "apiKey",
+			"name": "sid",
+			"in": "header",
+			"description": "Unique Session ID (GUID format)"
+		},
+		"BearerAuth": {
+			"type": "apiKey",
+			"name": "Authorization",
+			"in": "header",
+			"description": "Enter your JWT token in the format: <token>"
+		}
+	},
+	"paths": {
+		"/auth/token": {
+			"get": {
+				"tags": ["Auth"],
+				"summary": "Generate JWT Token",
+				"description": "Generates a JWT token for the provided session ID (`sid`) if it exists and matches the GUID format.",
+				"parameters": [
+					{
+						"name": "sid",
+						"in": "query",
+						"required": true,
+						"type": "string",
+						"description": "Session ID (must be a valid GUID)"
+					},
+					{
+						"name": "lang",
+						"in": "query",
+						"required": false,
+						"type": "string",
+						"description": "Language code for response translation (default is 'en')"
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "Token generated successfully",
+						"schema": {
+							"type": "object",
+							"properties": {
+								"responseCode": {
+									"type": "integer",
+									"example": 200
+								},
+								"status": {
+									"type": "string",
+									"example": "Success"
+								},
+								"message": {
+									"type": "string",
+									"example": "Token generated successfully"
+								},
+								"transactionID": {
+									"type": "string",
+									"example": "ace7729c25f54078bf2074bc6b90be9d20250611121906326"
+								},
+								"data": {
+									"type": "object",
+									"properties": {
+										"token": {
+											"type": "string",
+											"example": "eyJhbGciOi..."
+										}
+									}
+								}
+							}
+						}
+					},
+					"400": {
+						"description": "Invalid input (e.g., missing or invalid `sid`)",
+						"schema": {
+							"type": "object",
+							"properties": {
+								"responseCode": {
+									"type": "integer",
+									"example": 400
+								},
+								"status": {
+									"type": "string",
+									"example": "Error"
+								},
+								"message": {
+									"type": "string",
+									"example": "'sId' field is required to generate the token"
+								}
+							}
+						}
+					},
+					"500": {
+						"description": "Internal Server Error",
+						"schema": {
+							"type": "object",
+							"properties": {
+								"responseCode": {
+									"type": "integer",
+									"example": 500
+								},
+								"status": {
+									"type": "string",
+									"example": "Error"
+								},
+								"message": {
+									"type": "string",
+									"example": "An error occurred while generating token"
+								}
+							}
+						}
+					}
+				}
+			}
+		},
+		"/auth/meetauth": {
+			"get": {
+				"tags": ["Auth"],
+				"summary": "Initiate Google OAuth2 Authentication",
+				"description": "Generates and redirects to the Google OAuth2 consent screen for Calendar API access.",
+				"responses": {
+					"302": {
+						"description": "Redirect to Google's OAuth2 consent page.",
+						"headers": {
+							"Location": {
+								"type": "string",
+								"description": "URL of the Google OAuth2 consent screen"
+							}
+						}
+					},
+					"500": {
+						"description": "Internal Server Error - Failed to generate authentication URL",
+						"schema": {
+							"type": "string",
+							"example": "Error generating auth URL"
+						}
+					}
+				}
+			}
+		},
+		"/auth/oauthcallback": {
+			"get": {
+				"tags": ["Auth"],
+				"summary": "OAuth2 Callback Handler",
+				"description": "Handles the OAuth2 callback by exchanging the authorization code for access and refresh tokens, and stores them locally.",
+				"parameters": [
+					{
+						"name": "code",
+						"in": "query",
+						"required": true,
+						"type": "string",
+						"description": "Authorization code returned by the OAuth2 provider"
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "Authentication successful. Tokens have been stored.",
+						"schema": {
+							"type": "string",
+							"example": "Authentication successful! Tokens have been stored."
+						}
+					},
+					"400": {
+						"description": "Bad Request - No authorization code found in the query string",
+						"schema": {
+							"type": "string",
+							"example": "No authorization code found in the query string"
+						}
+					},
+					"500": {
+						"description": "Internal Server Error - Failed to retrieve access token",
+						"schema": {
+							"type": "string",
+							"example": "Error retrieving access token"
+						}
+					}
+				}
+			}
+		},
+		"/api/generateotp": {
+			"post": {
+				"tags": ["Otp"],
+				"summary": "Generate OTP",
+				"description": "Generates a One-Time Password (OTP) for the provided email or phone number. Either email or phonenumber is required.",
+				"parameters": [
+					{
+						"in": "body",
+						"name": "body",
+						"required": true,
+						"schema": {
+							"type": "object",
+							"properties": {
+								"email": {
+									"type": "string",
+									"example": "user@example.com",
+									"description": "Email address (optional if phonenumber is provided)"
+								},
+								"phonenumber": {
+									"type": "string",
+									"example": "+1234567890",
+									"description": "Phone number (optional if email is provided)"
+								},
+								"regionid": {
+									"type": "string",
+									"example": "1",
+									"description": "Region identifier"
+								},
+								"appointmentnumber": {
+									"type": "string",
+									"example": "A123456",
+									"description": "Optional appointment number (not used in controller but kept for compatibility)"
+								},
+								"lang": {
+									"type": "string",
+									"example": "en",
+									"description": "Language code (default is 'en')"
+								},
+								"transactionid": {
+									"type": "string",
+									"example": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+									"description": "Optional transaction ID, auto-generated if not provided"
+								},
+								"otherid": {
+									"type": "string",
+									"example": "X123",
+									"description": "Other identifier (not used in logic, for forward compatibility)"
+								}
+							},
+							"required": []
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "OTP generated successfully",
+						"schema": {
+							"type": "object",
+							"properties": {
+								"responseCode": {
+									"type": "integer",
+									"example": 200
+								},
+								"status": {
+									"type": "string",
+									"example": "Success"
+								},
+								"message": {
+									"type": "string",
+									"example": "OTP generated successfully"
+								},
+								"transactionID": {
+									"type": "string",
+									"example": "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+								},
+								"data": {
+									"type": "object",
+									"example": {
+										"otp": "123456",
+										"expiry": "2025-06-11T12:00:00Z"
+									}
+								}
+							}
+						}
+					},
+					"400": {
+						"description": "Invalid input parameters",
+						"schema": {
+							"type": "object",
+							"properties": {
+								"responseCode": {
+									"type": "integer",
+									"example": 400
+								},
+								"status": {
+									"type": "string",
+									"example": "Error"
+								},
+								"message": {
+									"type": "string",
+									"example": "Invalid parameters, Email or phoneNumber is required"
+								}
+							}
+						}
+					},
+					"500": {
+						"description": "Internal server error while generating OTP",
+						"schema": {
+							"type": "object",
+							"properties": {
+								"responseCode": {
+									"type": "integer",
+									"example": 500
+								},
+								"status": {
+									"type": "string",
+									"example": "Error"
+								},
+								"message": {
+									"type": "string",
+									"example": "An error occurred while generating OTP"
+								}
+							}
+						}
+					}
+				}
+			}
+		},
+		"/api/validateotp": {
+			"post": {
+				"tags": ["Otp"],
+				"summary": "Validate OTP",
+				"description": "Validates the OTP sent to a user via email or phone. Requires the OTP and either an email or phone number.",
+				"parameters": [
+					{
+						"in": "body",
+						"name": "body",
+						"required": true,
+						"schema": {
+							"type": "object",
+							"properties": {
+								"email": {
+									"type": "string",
+									"example": "user@example.com",
+									"description": "Email address (optional if phonenumber is provided)"
+								},
+								"phonenumber": {
+									"type": "string",
+									"example": "+1234567890",
+									"description": "Phone number (optional if email is provided)"
+								},
+								"appointmentnumber": {
+									"type": "string",
+									"example": "A123456",
+									"description": "Optional appointment number (not used in controller)"
+								},
+								"otp": {
+									"type": "string",
+									"example": "123456",
+									"description": "The OTP code received by the user (required)"
+								},
+								"lang": {
+									"type": "string",
+									"example": "en",
+									"description": "Language code (default is 'en')"
+								},
+								"transactionid": {
+									"type": "string",
+									"example": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+									"description": "Optional transaction ID for tracking"
+								}
+							},
+							"required": ["otp"]
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "OTP validated successfully",
+						"schema": {
+							"type": "object",
+							"properties": {
+								"responseCode": {
+									"type": "integer",
+									"example": 200
+								},
+								"status": {
+									"type": "string",
+									"example": "Success"
+								},
+								"message": {
+									"type": "string",
+									"example": "OTP validated successfully"
+								},
+								"transactionID": {
+									"type": "string",
+									"example": "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+								},
+								"data": {
+									"type": "object",
+									"example": {
+										"validated": true
+									}
+								}
+							}
+						}
+					},
+					"400": {
+						"description": "Validation failed due to missing or incorrect input",
+						"schema": {
+							"type": "object",
+							"properties": {
+								"responseCode": {
+									"type": "integer",
+									"example": 400
+								},
+								"status": {
+									"type": "string",
+									"example": "Error"
+								},
+								"message": {
+									"type": "string",
+									"example": "Invalid parameters, Email or phoneNumber is required"
+								}
+							}
+						}
+					},
+					"500": {
+						"description": "Internal server error while validating OTP",
+						"schema": {
+							"type": "object",
+							"properties": {
+								"responseCode": {
+									"type": "integer",
+									"example": 500
+								},
+								"status": {
+									"type": "string",
+									"example": "Error"
+								},
+								"message": {
+									"type": "string",
+									"example": "An error occurred while validating OTP"
+								}
+							}
+						}
+					}
+				}
+			}
+		},
+		"/ticket/categories": {
+			"get": {
+				"tags": ["Ticket"],
+				"summary": "Fetch Ticket Categories",
+				"description": "Fetch ticket categories for a client and branch, optionally grouped by category group.",
+				"parameters": [
+					{
+						"name": "lang",
+						"in": "query",
+						"type": "string",
+						"required": true,
+						"description": "Language code (e.g. 'en', 'ur')"
+					},
+					{
+						"name": "clientid",
+						"in": "query",
+						"type": "integer",
+						"required": true,
+						"description": "Client ID"
+					},
+					{
+						"name": "branchid",
+						"in": "query",
+						"type": "string",
+						"required": false,
+						"description": "Branch ID to filter categories"
+					},
+					{
+						"name": "groupwisedata",
+						"in": "query",
+						"type": "boolean",
+						"required": false,
+						"description": "If true, returns data grouped by category group"
+					},
+					{
+						"name": "transactionid",
+						"in": "query",
+						"type": "string",
+						"required": false,
+						"description": "Unique transaction ID (optional)"
+					},
+					{
+						"name": "categoryid",
+						"in": "query",
+						"type": "string",
+						"required": false,
+						"description": "Filter by a specific category ID"
+					},
+					{
+						"name": "prioritylevel",
+						"in": "query",
+						"type": "integer",
+						"required": false,
+						"description": "Filter by priority level (optional)"
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "Successfully fetched categories",
+						"schema": {
+							"type": "object",
+							"properties": {
+								"responseCode": {
+									"type": "integer"
+								},
+								"status": {
+									"type": "string"
+								},
+								"message": {
+									"type": "string"
+								},
+								"transactionID": {
+									"type": ["string", "null"]
+								},
+								"data": {
+									"type": "array",
+									"items": {
+										"type": "object",
+										"properties": {
+											"categoryID": {
+												"type": "string"
+											},
+											"categoryTitle": {
+												"type": "string"
+											},
+											"categoryImage": {
+												"type": ["string", "null"]
+											},
+											"ticketCount": {
+												"type": ["integer", "null"]
+											},
+											"waitTime": {
+												"type": "integer"
+											},
+											"position": {
+												"type": "integer"
+											},
+											"branchId": {
+												"type": "integer"
+											},
+											"groupName": {
+												"type": "string"
+											},
+											"InActive": {
+												"type": "integer"
+											},
+											"categoryTranslations": {
+												"type": "object",
+												"additionalProperties": {
+													"type": "string"
+												}
+											},
+											"groupTranslations": {
+												"type": "object",
+												"additionalProperties": {
+													"type": "string"
+												}
+											}
+										}
+									}
+								}
+							},
+							"example": {
+								"responseCode": 200,
+								"status": "Success",
+								"message": "Data successfully fetched",
+								"transactionID": null,
+								"data": [
+									{
+										"categoryID": "AAC",
+										"categoryTitle": "AtencionAsistidaCaja",
+										"categoryImage": null,
+										"ticketCount": null,
+										"waitTime": 0,
+										"position": -1,
+										"branchId": 7,
+										"groupName": "gggg",
+										"InActive": 0,
+										"categoryTranslations": {
+											"en": "AtencionAsistidaCaja"
+										},
+										"groupTranslations": {
+											"en": "gggg",
+											"sp": "Nosotros",
+											"ar": "نحن",
+											"ur": "uu"
+										}
+									}
+								]
+							}
+						}
+					},
+					"404": {
+						"description": "No categories found",
+						"schema": {
+							"type": "object",
+							"example": {
+								"responseCode": 404,
+								"status": "Error",
+								"message": "No data found.",
+								"transactionID": null,
+								"data": []
+							}
+						}
+					},
+					"400": {
+						"description": "Invalid parameters"
+					},
+					"500": {
+						"description": "Internal server error"
+					}
+				}
+			}
+		},
+		"/api/issueticket": {
+			"post": {
+				"tags": ["Ticket"],
+				"summary": "Issue a ticket",
+				"description": "Issues a new ticket for a specific branch and category. Requires user ID, branch ID, category name, and request data.",
+				"consumes": ["application/json"],
+				"produces": ["application/json"],
+				"parameters": [
+					{
+						"in": "body",
+						"name": "body",
+						"required": true,
+						"schema": {
+							"type": "object",
+							"required": ["branchid", "categoryname", "requestdata", "userid"],
+							"properties": {
+								"branchid": {
+									"type": "string",
+									"example": "7",
+									"description": "Branch ID where the ticket is to be issued"
+								},
+								"categoryname": {
+									"type": "string",
+									"example": "VIP",
+									"description": "Category id for which the ticket is issued"
+								},
+								"requestdata": {
+									"type": "array",
+									"example": ["payload1", "payload2"],
+									"description": "Payload data for additional ticket requirements"
+								},
+								"lang": {
+									"type": "string",
+									"example": "en",
+									"description": "Language code (e.g., 'en', 'ur')"
+								},
+								"userid": {
+									"type": "string",
+									"example": "user_12345",
+									"description": "User ID issuing the ticket"
+								}
+							}
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "Ticket successfully issued",
+						"schema": {
+							"type": "object",
+							"properties": {
+								"responseCode": {
+									"type": "integer",
+									"example": 200
+								},
+								"status": {
+									"type": "string",
+									"example": "Success"
+								},
+								"message": {
+									"type": "string",
+									"example": "Ticket Successfully Issued."
+								},
+								"transactionID": {
+									"type": "string",
+									"example": "TICKET_ISSUE_1_60_20250612073659821"
+								},
+								"data": {
+									"type": "object",
+									"properties": {
+										"ticket_number_f1": {
+											"type": "string",
+											"example": "CA010"
+										},
+										"ticket_number_f": {
+											"type": "string",
+											"example": "CA010"
+										},
+										"category_avg_waittime": {
+											"type": "integer",
+											"example": 594
+										},
+										"category_waiting_tickets": {
+											"type": "integer",
+											"example": 0
+										},
+										"ticket_matter_required": {
+											"type": "integer",
+											"example": 0
+										},
+										"ticket_message": {
+											"type": "string",
+											"example": ""
+										},
+										"session_id": {
+											"type": "string",
+											"example": "acdbda4769a51749686343705"
+										},
+										"screen_message": {
+											"type": "string",
+											"example": ""
+										},
+										"ticket_id": {
+											"type": "integer",
+											"example": 18
+										},
+										"ticket_number": {
+											"type": "integer",
+											"example": 10
+										},
+										"ticket_prefix": {
+											"type": "string",
+											"example": "CA"
+										},
+										"category_title": {
+											"type": "string",
+											"example": "Very Important Person"
+										},
+										"ticket_issue_time": {
+											"type": "string",
+											"example": "06/12/25 12:37 PM"
+										},
+										"category_approx_waittime": {
+											"type": "integer",
+											"example": 23
+										},
+										"counter_id": {
+											"type": "integer",
+											"example": -1
+										}
+									}
+								}
+							}
+						}
+					},
+					"400": {
+						"description": "Invalid request parameters"
+					},
+					"403": {
+						"description": "Access forbidden"
+					},
+					"404": {
+						"description": "Category or branch not found"
+					},
+					"500": {
+						"description": "Internal server error"
+					}
+				}
+			}
+		},
+		"/api/editticket": {
+			"post": {
+				"tags": ["Ticket"],
+				"summary": "Edit a ticket",
+				"description": "Edits a ticket with updated information including request data, priority, journey steps, and category info.",
+				"parameters": [
+					{
+						"name": "body",
+						"in": "body",
+						"required": true,
+						"schema": {
+							"type": "object",
+							"properties": {
+								"branchId": {
+									"type": "string",
+									"example": "6"
+								},
+								"priority": {
+									"type": "string",
+									"example": "1"
+								},
+								"requestData": {
+									"type": "array",
+									"items": {
+										"type": "string"
+									},
+									"example": [
+										"test three ",
+										"+9 (999) 999-9999",
+										"test@haha.com",
+										"",
+										"",
+										"language:en|Building Plan Pre-Submittal Review (BPPR)",
+										"RESIDENTIAL PROJECT",
+										"Service Option 1",
+										"[{\"category_id\":4,\"LIC\":[]},{\"category_id\":7,\"CAR\":[]}]",
+										"0|true|true"
+									]
+								},
+								"userId": {
+									"type": "integer",
+									"example": 1
+								},
+								"journey": {
+									"type": "object",
+									"properties": {
+										"current_position": {
+											"type": "integer",
+											"example": 1
+										},
+										"journey_array": {
+											"type": "array",
+											"items": {
+												"type": "object",
+												"properties": {
+													"category_id": {
+														"type": "integer",
+														"example": 4
+													},
+													"LIC": {
+														"type": "array",
+														"items": {
+															"type": "string"
+														},
+														"example": []
+													},
+													"CAR": {
+														"type": "array",
+														"items": {
+															"type": "string"
+														},
+														"example": []
+													}
+												},
+												"example": {
+													"category_id": 4,
+													"LIC": []
+												}
+											}
+										}
+									},
+									"example": {
+										"current_position": 1,
+										"journey_array": [
+											{
+												"category_id": 4,
+												"LIC": []
+											},
+											{
+												"category_id": 7,
+												"CAR": []
+											}
+										]
+									}
+								},
+								"ticketId": {
+									"type": "integer",
+									"example": 39
+								},
+								"categoryName": {
+									"type": "string",
+									"example": "LIC"
+								},
+								"lang": {
+									"type": "string",
+									"example": "en"
+								},
+								"transactionId": {
+									"type": "string",
+									"example": "TXN123456"
+								}
+							},
+							"required": [
+								"branchId",
+								"priority",
+								"requestData",
+								"userId",
+								"journey",
+								"ticketId",
+								"categoryName"
+							]
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "Ticket updated successfully",
+						"schema": {
+							"type": "object",
+							"properties": {
+								"success": {
+									"type": "boolean",
+									"example": true
+								},
+								"message": {
+									"type": "string",
+									"example": "Ticket updated successfully"
+								},
+								"ticketId": {
+									"type": "integer",
+									"example": 39
+								}
+							}
+						}
+					},
+					"400": {
+						"description": "Invalid request data"
+					},
+					"500": {
+						"description": "Server error"
+					}
+				}
+			}
+		},
+		"/api/cancelticket": {
+			"post": {
+				"tags": ["Ticket"],
+				"summary": "Cancel a ticket",
+				"description": "Cancels a ticket based on ticket ID, with optional manager override. Requires branch ID and other contextual fields.",
+				"parameters": [
+					{
+						"name": "body",
+						"in": "body",
+						"required": true,
+						"schema": {
+							"type": "object",
+							"properties": {
+								"branchid": {
+									"type": "string",
+									"example": "60",
+									"description": "ID of the branch where ticket was issued"
+								},
+								"ticketid": {
+									"type": "integer",
+									"example": 123,
+									"description": "ID of the ticket to cancel"
+								},
+								"lang": {
+									"type": "string",
+									"example": "en",
+									"description": "Language code for messages (default is 'en')"
+								},
+								"transactionid": {
+									"type": "string",
+									"example": "",
+									"description": "Optional transaction ID"
+								},
+								"userid": {
+									"type": "string",
+									"example": "user001",
+									"description": "ID of the user requesting the cancellation"
+								},
+								"cancelreason": {
+									"type": "string",
+									"example": "Customer left",
+									"description": "Reason for cancelling the ticket"
+								},
+								"managercancel": {
+									"type": "boolean",
+									"example": false,
+									"description": "Set to true if manager is cancelling the ticket"
+								},
+								"counterid": {
+									"type": "string",
+									"example": "5",
+									"description": "Counter ID required if not cancelled by manager"
+								}
+							},
+							"required": ["branchid", "ticketid"]
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "Ticket successfully cancelled",
+						"schema": {
+							"type": "object",
+							"properties": {
+								"responseCode": {
+									"type": "integer",
+									"example": 200
+								},
+								"status": {
+									"type": "string",
+									"example": "Success"
+								},
+								"message": {
+									"type": "string",
+									"example": "Ticket cancelled successfully"
+								},
+								"transactionID": {
+									"type": "string",
+									"example": "abc-123"
+								},
+								"data": {
+									"type": "object",
+									"description": "Details returned from cancellation",
+									"example": {
+										"ticketid": "A001",
+										"cancelled": true,
+										"cancelledBy": "user001",
+										"timestamp": "2025-06-11T14:22:00Z"
+									}
+								}
+							}
+						}
+					},
+					"400": {
+						"description": "Bad Request - Missing required parameters or invalid parameter combination",
+						"schema": {
+							"type": "object",
+							"properties": {
+								"status": {
+									"type": "string",
+									"example": "failure"
+								},
+								"message": {
+									"type": "string",
+									"example": "Invalid parameters"
+								}
+							}
+						}
+					},
+					"404": {
+						"description": "Ticket not found or already cancelled",
+						"schema": {
+							"type": "object",
+							"properties": {
+								"status": {
+									"type": "string",
+									"example": "notfound"
+								},
+								"message": {
+									"type": "string",
+									"example": "Ticket not found"
+								}
+							}
+						}
+					},
+					"409": {
+						"description": "Ticket cancellation already processed",
+						"schema": {
+							"type": "object",
+							"properties": {
+								"status": {
+									"type": "string",
+									"example": "conflict"
+								},
+								"message": {
+									"type": "string",
+									"example": "Request has already been processed"
+								}
+							}
+						}
+					},
+					"500": {
+						"description": "Internal Server Error",
+						"schema": {
+							"type": "object",
+							"properties": {
+								"status": {
+									"type": "string",
+									"example": "error"
+								},
+								"message": {
+									"type": "string",
+									"example": "An error occurred while processing the request"
+								}
+							}
+						}
+					}
+				}
+			}
+		},
+		"/ticket/getticketjourney": {
+			"post": {
+				"tags": ["Ticket"],
+				"summary": "Fetch ticket journey snapshot",
+				"description": "Returns a snapshot of a ticket's journey based on ticket number and branch ID.",
+				"parameters": [
+					{
+						"name": "body",
+						"in": "body",
+						"required": true,
+						"schema": {
+							"type": "object",
+							"properties": {
+								"branchid": {
+									"type": "string",
+									"example": "60",
+									"description": "Branch ID where the ticket was issued"
+								},
+								"ticketnumber": {
+									"type": "string",
+									"example": "VIP001",
+									"description": "Ticket number to fetch the snapshot"
+								},
+								"lang": {
+									"type": "string",
+									"example": "en",
+									"description": "Language code (optional, default is 'en')"
+								}
+							},
+							"required": ["branchid", "ticketnumber"]
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "Successfully fetched ticket journey snapshot",
+						"schema": {
+							"type": "object",
+							"properties": {
+								"responseCode": {
+									"type": "integer",
+									"example": 200
+								},
+								"status": {
+									"type": "string",
+									"example": "Success"
+								},
+								"message": {
+									"type": "string",
+									"example": "Data successfully fetched"
+								},
+								"transactionID": {
+									"type": ["string", "null"],
+									"example": null
+								},
+								"data": {
+									"type": "object",
+									"properties": {
+										"ticket_number_f1": {
+											"type": "string",
+											"example": "VIP001"
+										},
+										"ticket_number_f": {
+											"type": "string",
+											"example": "VIP001"
+										},
+										"category_avg_waittime": {
+											"type": "integer",
+											"example": 5
+										},
+										"category_waiting_tickets": {
+											"type": "integer",
+											"example": 3
+										},
+										"category_title": {
+											"type": "string",
+											"example": "Very Important Person"
+										},
+										"ticket_matter_required": {
+											"type": "integer",
+											"example": 0
+										},
+										"ticket_message": {
+											"type": "string",
+											"example": ""
+										},
+										"session_id": {
+											"type": "string",
+											"example": "session1234"
+										},
+										"screen_message": {
+											"type": "string",
+											"example": ""
+										},
+										"ticket_id": {
+											"type": "string",
+											"example": "A001"
+										},
+										"ticket_number": {
+											"type": "string",
+											"example": "A001"
+										},
+										"ticket_prefix": {
+											"type": "string",
+											"example": "A"
+										},
+										"ticket_issue_time": {
+											"type": "string",
+											"example": "2025-06-11 12:30:00"
+										},
+										"ticket_payload": {
+											"type": ["object", "null"],
+											"example": {}
+										},
+										"position_in_queue": {
+											"type": "integer",
+											"example": 3
+										},
+										"category_approx_waittime": {
+											"type": "integer",
+											"example": 0
+										},
+										"call_flag": {
+											"type": "boolean",
+											"example": false
+										},
+										"counter_id": {
+											"type": "integer",
+											"example": -1
+										}
+									}
+								}
+							}
+						}
+					},
+					"400": {
+						"description": "Missing or invalid parameters"
+					},
+					"404": {
+						"description": "Ticket not found or no data available"
+					},
+					"500": {
+						"description": "Internal Server Error"
+					}
+				}
+			}
+		},
+		"/ticket/getticketdetail": {
+			"get": {
+				"tags": ["Ticket"],
+				"summary": "Get Ticket Detail",
+				"description": "Fetches ticket detail using branchcode, branchid, and encrypted ticketid.",
+				"parameters": [
+					{
+						"name": "branchcode",
+						"in": "query",
+						"required": false,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"name": "ticketid",
+						"in": "query",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"name": "branchid",
+						"in": "query",
+						"required": false,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"name": "lang",
+						"in": "query",
+						"required": false,
+						"schema": {
+							"type": "string",
+							"default": "en"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "Ticket details fetched successfully",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "object",
+									"properties": {
+										"status": {
+											"type": "string"
+										},
+										"message": {
+											"type": "string"
+										},
+										"data": {
+											"type": "object",
+											"properties": {
+												"ticket_number_f1": {
+													"type": "string"
+												},
+												"ticket_number_f": {
+													"type": "string"
+												},
+												"category_avg_waittime": {
+													"type": "integer"
+												},
+												"category_waiting_tickets": {
+													"type": "integer"
+												},
+												"category_title": {
+													"type": "string"
+												},
+												"ticket_matter_required": {
+													"type": "integer"
+												},
+												"ticket_message": {
+													"type": "string"
+												},
+												"session_id": {
+													"type": "string"
+												},
+												"screen_message": {
+													"type": "string"
+												},
+												"ticket_id": {
+													"type": "string"
+												},
+												"ticket_number": {
+													"type": "string"
+												},
+												"ticket_prefix": {
+													"type": "string"
+												},
+												"ticket_issue_time": {
+													"type": "string"
+												},
+												"ticket_payload": {
+													"type": "object"
+												},
+												"position_in_queue": {
+													"type": "integer"
+												},
+												"category_approx_waittime": {
+													"type": "integer"
+												},
+												"call_flag": {
+													"type": "integer"
+												},
+												"counter_id": {
+													"type": "string"
+												},
+												"location": {
+													"type": "object",
+													"properties": {
+														"branchid": {
+															"type": "string"
+														},
+														"branchname": {
+															"type": "string"
+														},
+														"address": {
+															"type": "string"
+														},
+														"contact": {
+															"type": "string"
+														}
+													}
+												},
+												"categoryTranslations": {
+													"type": "object",
+													"properties": {
+														"en": {
+															"type": "string"
+														},
+														"ur": {
+															"type": "string"
+														}
+													}
+												}
+											}
+										}
+									},
+									"example": {
+										"status": "success",
+										"message": "Data successfully fetched",
+										"data": {
+											"ticket_number_f1": "A101",
+											"ticket_number_f": "A101",
+											"category_avg_waittime": 0,
+											"category_waiting_tickets": 0,
+											"category_title": "Driving License",
+											"ticket_matter_required": 0,
+											"ticket_message": "",
+											"session_id": "session123",
+											"screen_message": "",
+											"ticket_id": "456",
+											"ticket_number": "A101",
+											"ticket_prefix": "",
+											"ticket_issue_time": "06/11/25 3:45 PM",
+											"ticket_payload": {},
+											"position_in_queue": -1,
+											"category_approx_waittime": -1,
+											"call_flag": 0,
+											"counter_id": "C1",
+											"location": {
+												"branchid": "123",
+												"branchname": "Test Branch",
+												"address": "Main Street, City",
+												"contact": "0123456789"
+											},
+											"categoryTranslations": {
+												"en": "Driving License",
+												"ur": "ڈرائیونگ لائسنس"
+											}
+										}
+									}
+								}
+							}
+						}
+					},
+					"204": {
+						"description": "Ticket not found",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "object",
+									"properties": {
+										"status": {
+											"type": "string"
+										},
+										"message": {
+											"type": "string"
+										},
+										"data": {
+											"type": "null"
+										}
+									},
+									"example": {
+										"status": "success",
+										"message": "No Ticket Found!",
+										"data": null
+									}
+								}
+							}
+						}
+					},
+					"400": {
+						"description": "Bad request - Missing or invalid parameters",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "object",
+									"properties": {
+										"status": {
+											"type": "string"
+										},
+										"message": {
+											"type": "string"
+										},
+										"data": {
+											"type": "null"
+										}
+									},
+									"example": {
+										"status": "error",
+										"message": "Invalid parameters",
+										"data": null
+									}
+								}
+							}
+						}
+					},
+					"500": {
+						"description": "Internal server error",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "object",
+									"properties": {
+										"status": {
+											"type": "string"
+										},
+										"message": {
+											"type": "string"
+										},
+										"data": {
+											"type": "null"
+										}
+									},
+									"example": {
+										"status": "failure",
+										"message": "Something went wrong!",
+										"data": null
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		},
+		"/ticket/getCategoryMapping": {
+			"get": {
+				"tags": ["Ticket"],
+				"summary": "Get Category Mapping",
+				"description": "Returns a list of category codes and their suboptions (if any).",
+				"parameters": [
+					{
+						"name": "lang",
+						"in": "query",
+						"description": "Language code (e.g., 'en', 'ur')",
+						"required": false,
+						"type": "string"
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "Category mapping fetched successfully",
+						"schema": {
+							"type": "object",
+							"properties": {
+								"status": {
+									"type": "string"
+								},
+								"message": {
+									"type": "string"
+								},
+								"data": {
+									"type": "array",
+									"items": {
+										"type": "object",
+										"properties": {
+											"categoryCode": {
+												"type": "string"
+											},
+											"categoryId": {
+												"type": "string"
+											},
+											"subOptions": {
+												"type": "array",
+												"items": {
+													"type": "object",
+													"properties": {
+														"categoryId": {
+															"type": "string"
+														},
+														"subOptionCode": {
+															"type": "string"
+														}
+													}
+												}
+											}
+										}
+									}
+								}
+							},
+							"example": {
+								"status": "success",
+								"message": "Data successfully fetched",
+								"data": [
+									{
+										"categoryCode": "DL",
+										"categoryId": "101",
+										"subOptions": [
+											{
+												"categoryId": "102",
+												"subOptionCode": "LTV"
+											},
+											{
+												"categoryId": "103",
+												"subOptionCode": "HTV"
+											}
+										]
+									},
+									{
+										"categoryCode": "ID",
+										"categoryId": "201",
+										"subOptions": []
+									}
+								]
+							}
+						}
+					},
+					"204": {
+						"description": "No category mapping found",
+						"schema": {
+							"type": "object",
+							"properties": {
+								"status": {
+									"type": "string"
+								},
+								"message": {
+									"type": "string"
+								},
+								"data": {
+									"type": "null"
+								}
+							},
+							"example": {
+								"status": "success",
+								"message": "No Category Mapping Found!",
+								"data": null
+							}
+						}
+					},
+					"500": {
+						"description": "Internal server error",
+						"schema": {
+							"type": "object",
+							"properties": {
+								"status": {
+									"type": "string"
+								},
+								"message": {
+									"type": "string"
+								},
+								"data": {
+									"type": "null"
+								}
+							},
+							"example": {
+								"status": "failure",
+								"message": "An error occurred while fetching category mapping",
+								"data": null
+							}
+						}
+					}
+				}
+			}
+		},
+		"/api/getbranchservesdata": {
+			"post": {
+				"tags": ["Ticket"],
+				"description": "Returns serve ticket details for a given branch and ticket number. Responds with 404 if the branch does not exist or is not configured.",
+				"parameters": [
+					{
+						"name": "body",
+						"in": "body",
+						"required": true,
+						"schema": {
+							"type": "object",
+							"properties": {
+								"transactionid": {
+									"type": "string",
+									"example": "73607e2e103e43e3aa11758874fc40c420250612120017002"
+								},
+								"branchid": {
+									"type": "string",
+									"example": "B001"
+								},
+								"lang": {
+									"type": "string",
+									"example": "en"
+								},
+								"ticketnumber": {
+									"type": "string",
+									"example": "CA001"
+								}
+							},
+							"required": ["transactionid", "branchid", "lang", "ticketnumber"]
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "Successful response with serve ticket data",
+						"schema": {
+							"type": "object",
+							"properties": {
+								"responseCode": {
+									"type": "integer",
+									"example": 200
+								},
+								"status": {
+									"type": "string",
+									"example": "Success"
+								},
+								"message": {
+									"type": "string",
+									"example": "Data sent successfully"
+								},
+								"transactionID": {
+									"type": "string",
+									"example": "73607e2e103e43e3aa11758874fc40c420250612120017002"
+								},
+								"data": {
+									"type": "object",
+									"properties": {
+										"branchserveticket": {
+											"type": "array",
+											"items": {
+												"type": "object",
+												"properties": {
+													"branch_name": {
+														"type": "string",
+														"example": "CallingProfileBranch"
+													},
+													"counter_title": {
+														"type": "string",
+														"example": "Counter 1"
+													},
+													"ticket_number": {
+														"type": "string",
+														"example": "CA001"
+													},
+													"operator_name": {
+														"type": "string",
+														"example": "user 1"
+													},
+													"category_title": {
+														"type": "string",
+														"example": "Very Important Person"
+													},
+													"customer_name": {
+														"type": "string",
+														"example": "N/A"
+													},
+													"customer_id": {
+														"type": "string",
+														"example": "N/A"
+													},
+													"status": {
+														"type": "string",
+														"example": "Served"
+													},
+													"service_time": {
+														"type": "string",
+														"example": "00:00:01"
+													},
+													"issue_time": {
+														"type": "string",
+														"example": "00:40:50"
+													},
+													"call_time": {
+														"type": "string",
+														"example": "00:51:07"
+													},
+													"end_time": {
+														"type": "string",
+														"example": "00:51:08"
+													},
+													"notes": {
+														"type": "string",
+														"example": ""
+													},
+													"order": {
+														"type": "string",
+														"example": "1"
+													},
+													"counter_no": {
+														"type": "string",
+														"example": "1"
+													},
+													"type": {
+														"type": "string",
+														"example": "0"
+													},
+													"transaction_type": {
+														"type": "string",
+														"example": ""
+													},
+													"record_id": {
+														"type": "string",
+														"example": "N/A"
+													},
+													"noshow_duration_time": {
+														"type": "string",
+														"example": "00:00:00"
+													},
+													"noshow_time": {
+														"type": "string",
+														"example": "00:00:00"
+													},
+													"noshow_count": {
+														"type": "string",
+														"example": "0"
+													},
+													"contact_no": {
+														"type": "string",
+														"example": "N/A"
+													},
+													"SQN": {
+														"type": "string",
+														"example": "VIP"
+													}
+												}
+											}
+										}
+									}
+								}
+							}
+						}
+					},
+					"404": {
+						"description": "Branch not found or not configured",
+						"schema": {
+							"type": "object",
+							"properties": {
+								"responseCode": {
+									"type": "integer",
+									"example": 404
+								},
+								"status": {
+									"type": "string",
+									"example": "Error"
+								},
+								"message": {
+									"type": "string",
+									"example": "Branch does not exist or is not configured"
+								},
+								"transactionID": {
+									"type": "string",
+									"example": "7eeadd54cbb54ff3943964208a1a456c20250612120027609"
+								},
+								"data": {
+									"type": "array",
+									"items": {}
+								}
+							}
+						}
+					}
+				}
+			}
+		},
+		"/api/transfercategoryticket": {
+			"post": {
+				"tags": ["Ticket"],
+				"description": "Transfers a ticket to a different category and returns updated queue information, category list, and counter status.",
+				"responses": {
+					"200": {
+						"description": "Transfer successful. Returns transaction ID, updated category list, profiles, and counter statuses.",
+						"content": {
+							"application/json": {
+								"example": {
+									"responseCode": 200,
+									"status": "Success",
+									"message": "Transfer Ticket successfully",
+									"transactionID": "TICKET_TRANSFER_CATEGORY_2_60_20250612080253759",
+									"data": {
+										"counter_status": {
+											"branch_code": "BNTEST",
+											"auxiliary_mode": 0,
+											"TOTAL_RANDOM_CALL": 0,
+											"counter_random_call_count": 0,
+											"avg_wait_time": 670,
+											"tickets_served": 10,
+											"branch_name": "CallingProfileBranch",
+											"waiting_tickets": 0,
+											"avg_service_time": 42
+										},
+										"profiles": [
+											{
+												"profile_name": "Overflow_SM",
+												"profile_type": "OVERFLOW",
+												"profile_id": 2093,
+												"profile_logic": "{\"default_category\":\"1\",\"CALL\":{\"order\":[[{\"category\":1,\"condition\":{\"max_wait_time\":1000,\"ticket_priority\":true},\"count\":1}]]}}"
+											}
+										],
+										"categories": [
+											{
+												"category_allow_transfer": 1,
+												"category_name": "C02",
+												"category_title": "Category 2",
+												"category_id": 5,
+												"is_matter_required": 0,
+												"category_translations": {
+													"ltr@Spanish": "Spanish Category 2"
+												}
+											},
+											{
+												"category_allow_transfer": 1,
+												"category_name": "C03",
+												"category_title": "Category 3",
+												"category_id": 6,
+												"is_matter_required": 1,
+												"matters": [
+													{
+														"matter_id": 1,
+														"matter_title": "Billing"
+													},
+													{
+														"matter_id": 2,
+														"matter_title": "water"
+													},
+													{
+														"matter_id": 3,
+														"matter_title": "Gas"
+													},
+													{
+														"matter_id": 4,
+														"matter_title": "Cash"
+													}
+												],
+												"category_translations": {
+													"ltr@Spanish": "Spanish Category 3"
+												}
+											},
+											{
+												"category_allow_transfer": 0,
+												"category_name": "VIP",
+												"category_title": "Very Important Person",
+												"category_id": 1,
+												"is_matter_required": 0,
+												"category_translations": {
+													"ltr@Spanish": "Very Very Very Important Person of the Year",
+													"ltr@French": "French Very Very Very Important Person of the Year"
+												}
+											}
+										],
+										"current_counter_status": {
+											"profile_name": "Overflow_SM",
+											"category_title": "Very Important Person",
+											"category_name": "VIP",
+											"category_id": 1,
+											"current_session_id": "acdbda4769a51749686343705",
+											"profile_id": 2093,
+											"state": "COUNTER_IDLE",
+											"category_translations": {
+												"ltr@Spanish": "Very Very Very Important Person of the Year",
+												"ltr@French": "French Very Very Very Important Person of the Year"
+											}
+										}
+									}
+								}
+							}
+						}
+					},
+					"default": {
+						"description": "Unexpected error"
+					}
+				}
+			}
+		},
+		"/api/transferuserticket": {
+			"post": {
+				"tags": ["Ticket"],
+				"summary": "Transfer user's ticket",
+				"description": "Transfers the ticket of a user to a target user or counter.",
+				"consumes": ["application/json"],
+				"produces": ["application/json"],
+				"parameters": [
+					{
+						"in": "body",
+						"name": "body",
+						"required": true,
+						"schema": {
+							"type": "object",
+							"required": ["userid", "branchid", "counterid", "targetid"],
+							"properties": {
+								"userid": {
+									"type": "integer",
+									"example": 2
+								},
+								"branchid": {
+									"type": "integer",
+									"example": 60
+								},
+								"counterid": {
+									"type": "integer",
+									"example": 1
+								},
+								"targetid": {
+									"type": "integer",
+									"example": 2
+								}
+							}
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "Successful ticket transfer",
+						"schema": {
+							"type": "object",
+							"properties": {
+								"responseCode": {
+									"type": "integer",
+									"example": 200
+								},
+								"status": {
+									"type": "string",
+									"example": "Success"
+								},
+								"message": {
+									"type": "string",
+									"example": "Transfer Ticket successfully"
+								},
+								"transactionID": {
+									"type": "string",
+									"example": "TICKET_TRANSFER_USER_2_60_20250612083100256"
+								},
+								"data": {
+									"type": "object",
+									"properties": {
+										"counter_status": {
+											"type": "object",
+											"properties": {
+												"branch_code": {
+													"type": "string",
+													"example": "BNTEST"
+												},
+												"auxiliary_mode": {
+													"type": "integer",
+													"example": 0
+												},
+												"TOTAL_RANDOM_CALL": {
+													"type": "integer",
+													"example": 0
+												},
+												"counter_random_call_count": {
+													"type": "integer",
+													"example": 0
+												},
+												"avg_wait_time": {
+													"type": "integer",
+													"example": 813
+												},
+												"tickets_served": {
+													"type": "integer",
+													"example": 12
+												},
+												"branch_name": {
+													"type": "string",
+													"example": "CallingProfileBranch"
+												},
+												"waiting_tickets": {
+													"type": "integer",
+													"example": 2
+												},
+												"avg_service_time": {
+													"type": "integer",
+													"example": 40
+												}
+											}
+										},
+										"profiles": {
+											"type": "array",
+											"items": {
+												"type": "object",
+												"properties": {
+													"profile_name": {
+														"type": "string",
+														"example": "Overflow_SM"
+													},
+													"profile_type": {
+														"type": "string",
+														"example": "OVERFLOW"
+													},
+													"profile_id": {
+														"type": "integer",
+														"example": 2093
+													},
+													"profile_logic": {
+														"type": "string",
+														"example": "{\"default_category\":\"1\"}"
+													}
+												}
+											}
+										},
+										"categories": {
+											"type": "array",
+											"items": {
+												"type": "object",
+												"properties": {
+													"category_allow_transfer": {
+														"type": "integer",
+														"example": 1
+													},
+													"category_name": {
+														"type": "string",
+														"example": "C02"
+													},
+													"group_name": {
+														"type": "string",
+														"example": ""
+													},
+													"is_assigned": {
+														"type": "integer",
+														"example": 0
+													},
+													"category_waitingtickets": {
+														"type": "integer",
+														"example": 0
+													},
+													"next_ticket_wait_time": {
+														"type": "integer",
+														"example": 0
+													},
+													"category_title": {
+														"type": "string",
+														"example": "Category 2"
+													},
+													"category_maxwait_time": {
+														"type": "integer",
+														"example": 300000
+													},
+													"category_avgwait_time": {
+														"type": "integer",
+														"example": 0
+													},
+													"category_translations": {
+														"type": "object",
+														"additionalProperties": {
+															"type": "string"
+														}
+													},
+													"category_id": {
+														"type": "integer",
+														"example": 5
+													},
+													"group_id": {
+														"type": "integer",
+														"example": 0
+													},
+													"category_warningservice_time": {
+														"type": "integer",
+														"example": 240000
+													},
+													"is_matter_required": {
+														"type": "integer",
+														"example": 0
+													},
+													"category_maxservice_time": {
+														"type": "integer",
+														"example": 300000
+													},
+													"category_servedtickets": {
+														"type": "integer",
+														"example": 0
+													},
+													"matters": {
+														"type": "array",
+														"items": {
+															"type": "object",
+															"properties": {
+																"matter_name": {
+																	"type": "string"
+																},
+																"matter_id": {
+																	"type": "integer"
+																},
+																"matter_title": {
+																	"type": "string"
+																},
+																"matter_translations": {
+																	"type": "object",
+																	"additionalProperties": {
+																		"type": "string"
+																	}
+																}
+															}
+														}
+													}
+												}
+											}
+										},
+										"current_counter_status": {
+											"type": "object",
+											"properties": {
+												"profile_name": {
+													"type": "string",
+													"example": "Overflow_SM"
+												},
+												"category_title": {
+													"type": "string",
+													"example": "Very Important Person"
+												},
+												"category_name": {
+													"type": "string",
+													"example": "VIP"
+												},
+												"category_translations": {
+													"type": "object",
+													"additionalProperties": {
+														"type": "string"
+													}
+												},
+												"category_id": {
+													"type": "integer",
+													"example": 1
+												},
+												"current_session_id": {
+													"type": "string",
+													"example": "acdbda4769a51749686343705"
+												},
+												"profile_id": {
+													"type": "integer",
+													"example": 2093
+												},
+												"activity_id": {
+													"type": "integer",
+													"example": 0
+												},
+												"state": {
+													"type": "string",
+													"example": "COUNTER_IDLE"
+												}
+											}
+										}
+									}
+								}
+							}
+						}
+					},
+					"default": {
+						"description": "Unexpected error",
+						"schema": {
+							"type": "object",
+							"properties": {
+								"responseCode": {
+									"type": "integer"
+								},
+								"status": {
+									"type": "string"
+								},
+								"message": {
+									"type": "string"
+								}
+							}
+						}
+					}
+				}
+			}
+		},
+		"/api/transfercounterticket": {
+			"post": {
+				"tags": ["Ticket"],
+				"summary": "Transfer ticket between counters",
+				"description": "Transfers a ticket from one counter to another and returns updated counter status, profiles, and categories.",
+				"consumes": ["application/json"],
+				"produces": ["application/json"],
+				"parameters": [
+					{
+						"in": "body",
+						"name": "body",
+						"description": "Transfer payload",
+						"required": true,
+						"schema": {
+							"type": "object",
+							"properties": {
+								"userid": {
+									"type": "integer",
+									"example": 1
+								},
+								"branchid": {
+									"type": "integer",
+									"example": 60
+								},
+								"counterid": {
+									"type": "integer",
+									"example": 2
+								},
+								"targetid": {
+									"type": "integer",
+									"example": 1
+								}
+							},
+							"required": ["userid", "branchid", "counterid", "targetid"]
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "Successful transfer",
+						"schema": {
+							"type": "object",
+							"properties": {
+								"responseCode": {
+									"type": "integer",
+									"example": 200
+								},
+								"status": {
+									"type": "string",
+									"example": "Success"
+								},
+								"message": {
+									"type": "string",
+									"example": "Transfer Ticket successfully"
+								},
+								"transactionID": {
+									"type": "string",
+									"example": "TICKET_TRANSFER_COUNTER_1_60_20250612084441717"
+								},
+								"data": {
+									"type": "object",
+									"properties": {
+										"counter_status": {
+											"type": "object",
+											"properties": {
+												"branch_code": {
+													"type": "string",
+													"example": "BNTEST"
+												},
+												"auxiliary_mode": {
+													"type": "integer",
+													"example": 0
+												},
+												"TOTAL_RANDOM_CALL": {
+													"type": "integer",
+													"example": 0
+												},
+												"counter_random_call_count": {
+													"type": "integer",
+													"example": 0
+												},
+												"avg_wait_time": {
+													"type": "integer",
+													"example": 819
+												},
+												"tickets_served": {
+													"type": "integer",
+													"example": 12
+												},
+												"branch_name": {
+													"type": "string",
+													"example": "CallingProfileBranch"
+												},
+												"waiting_tickets": {
+													"type": "integer",
+													"example": 3
+												},
+												"avg_service_time": {
+													"type": "integer",
+													"example": 40
+												}
+											}
+										},
+										"profiles": {
+											"type": "array",
+											"items": {
+												"type": "object",
+												"properties": {
+													"profile_name": {
+														"type": "string"
+													},
+													"profile_type": {
+														"type": "string"
+													},
+													"profile_id": {
+														"type": "integer"
+													},
+													"profile_logic": {
+														"type": "string"
+													}
+												}
+											}
+										},
+										"categories": {
+											"type": "array",
+											"items": {
+												"type": "object",
+												"properties": {
+													"category_allow_transfer": {
+														"type": "integer"
+													},
+													"category_name": {
+														"type": "string"
+													},
+													"group_name": {
+														"type": "string"
+													},
+													"is_assigned": {
+														"type": "integer"
+													},
+													"category_waitingtickets": {
+														"type": "integer"
+													},
+													"next_ticket_wait_time": {
+														"type": "integer"
+													},
+													"category_title": {
+														"type": "string"
+													},
+													"category_maxwait_time": {
+														"type": "integer"
+													},
+													"category_avgwait_time": {
+														"type": "integer"
+													},
+													"category_translations": {
+														"type": "object",
+														"additionalProperties": {
+															"type": "string"
+														}
+													},
+													"category_id": {
+														"type": "integer"
+													},
+													"group_id": {
+														"type": "integer"
+													},
+													"category_warningservice_time": {
+														"type": "integer"
+													},
+													"is_matter_required": {
+														"type": "integer"
+													},
+													"category_maxservice_time": {
+														"type": "integer"
+													},
+													"category_servedtickets": {
+														"type": "integer"
+													}
+												}
+											}
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		},
+		"/api/transferbulkticket": {
+			"post": {
+				"tags": ["Ticket"],
+				"description": "",
+				"parameters": [
+					{
+						"name": "body",
+						"in": "body",
+						"schema": {
+							"type": "object",
+							"properties": {
+								"branchid": {
+									"example": "any"
+								},
+								"categoryname": {
+									"example": "any"
+								},
+								"ticketids": {
+									"example": "any"
+								},
+								"lang": {
+									"example": "any"
+								},
+								"userid": {
+									"example": "any"
+								},
+								"transactionid": {
+									"example": "any"
+								}
+							}
+						}
+					}
+				],
+				"responses": {
+					"default": {
+						"description": ""
+					}
+				}
+			}
+		},
+		"/api/callticket": {
+			"post": {
+				"tags": ["Ticket"],
+				"description": "",
+				"parameters": [
+					{
+						"name": "body",
+						"in": "body",
+						"schema": {
+							"type": "object",
+							"properties": {
+								"branchid": {
+									"example": "any"
+								},
+								"counterid": {
+									"example": "any"
+								},
+								"lang": {
+									"example": "any"
+								},
+								"transactionid": {
+									"example": "any"
+								},
+								"userid": {
+									"example": "any"
+								}
+							}
+						}
+					}
+				],
+				"responses": {
+					"default": {
+						"description": ""
+					}
+				}
+			}
+		},
+		"/api/serveticket": {
+			"post": {
+				"tags": ["Ticket"],
+				"description": "",
+				"parameters": [
+					{
+						"name": "body",
+						"in": "body",
+						"schema": {
+							"type": "object",
+							"properties": {
+								"branchid": {
+									"example": "any"
+								},
+								"counterid": {
+									"example": "any"
+								},
+								"lang": {
+									"example": "any"
+								},
+								"transactionid": {
+									"example": "any"
+								},
+								"userid": {
+									"example": "any"
+								}
+							}
+						}
+					}
+				],
+				"responses": {
+					"default": {
+						"description": ""
+					}
+				}
+			}
+		},
+		"/api/waitticket": {
+			"post": {
+				"tags": ["Ticket"],
+				"description": "",
+				"parameters": [
+					{
+						"name": "body",
+						"in": "body",
+						"schema": {
+							"type": "object",
+							"properties": {
+								"branchid": {
+									"example": "any"
+								},
+								"counterid": {
+									"example": "any"
+								},
+								"lang": {
+									"example": "any"
+								},
+								"transactionid": {
+									"example": "any"
+								},
+								"userid": {
+									"example": "any"
+								}
+							}
+						}
+					}
+				],
+				"responses": {
+					"default": {
+						"description": ""
+					}
+				}
+			}
+		},
+		"/api/recallticket": {
+			"post": {
+				"tags": ["Ticket"],
+				"description": "",
+				"parameters": [
+					{
+						"name": "body",
+						"in": "body",
+						"schema": {
+							"type": "object",
+							"properties": {
+								"branchid": {
+									"example": "any"
+								},
+								"counterid": {
+									"example": "any"
+								},
+								"ticketid": {
+									"example": "any"
+								},
+								"lang": {
+									"example": "any"
+								},
+								"transactionid": {
+									"example": "any"
+								},
+								"userid": {
+									"example": "any"
+								}
+							}
+						}
+					}
+				],
+				"responses": {
+					"default": {
+						"description": ""
+					}
+				}
+			}
+		},
+		"/api/addmatterticket": {
+			"post": {
+				"tags": ["Ticket"],
+				"description": "",
+				"parameters": [
+					{
+						"name": "body",
+						"in": "body",
+						"schema": {
+							"type": "object",
+							"properties": {
+								"branchid": {
+									"example": "any"
+								},
+								"counterid": {
+									"example": "any"
+								},
+								"matters": {
+									"example": "any"
+								},
+								"matterid": {
+									"example": "any"
+								},
+								"lang": {
+									"example": "any"
+								},
+								"userid": {
+									"example": "any"
+								},
+								"transactionid": {
+									"example": "any"
+								}
+							}
+						}
+					}
+				],
+				"responses": {
+					"default": {
+						"description": ""
+					}
+				}
+			}
+		},
+		"/api/getbranchid": {
+			"post": {
+				"tags": ["Branch"],
+				"description": "Fetches the branch ID corresponding to a given branch code.",
+				"consumes": ["application/json"],
+				"produces": ["application/json"],
+				"parameters": [
+					{
+						"in": "body",
+						"name": "body",
+						"required": true,
+						"schema": {
+							"type": "object",
+							"required": ["branchcode"],
+							"properties": {
+								"branchcode": {
+									"type": "string",
+									"example": "BR001",
+									"description": "Branch code used to fetch corresponding branch ID"
+								},
+								"lang": {
+									"type": "string",
+									"example": "en",
+									"description": "Optional language parameter"
+								},
+								"transactionid": {
+									"type": "string",
+									"example": "txn_abc_123",
+									"description": "Optional transaction ID for tracking the request"
+								}
+							}
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "Branch ID found",
+						"schema": {
+							"type": "object",
+							"properties": {
+								"errorCode": {
+									"type": "string",
+									"example": "Success"
+								},
+								"data": {
+									"type": "array",
+									"items": {
+										"type": "object",
+										"properties": {
+											"branchid": {
+												"type": "string",
+												"example": "7"
+											},
+											"branchname": {
+												"type": "string",
+												"example": "Main Branch"
+											}
+										}
+									}
+								}
+							}
+						}
+					},
+					"400": {
+						"description": "Invalid parameters"
+					},
+					"404": {
+						"description": "Branch not found"
+					},
+					"500": {
+						"description": "Internal server error"
+					}
+				}
+			}
+		},
+		"/api/getrabbitmqip": {
+			"post": {
+				"tags": ["Branch"],
+				"description": "",
+				"parameters": [
+					{
+						"name": "body",
+						"in": "body",
+						"schema": {
+							"type": "object",
+							"properties": {
+								"transactionid": {
+									"example": "any"
+								},
+								"branchcode": {
+									"example": "any"
+								},
+								"lang": {
+									"example": "any"
+								}
+							}
+						}
+					}
+				],
+				"responses": {
+					"default": {
+						"description": ""
+					}
+				}
+			}
+		},
+		"/api/getwaitingtickets": {
+			"post": {
+				"tags": ["Ticket"],
+				"description": "",
+				"parameters": [
+					{
+						"name": "body",
+						"in": "body",
+						"schema": {
+							"type": "object",
+							"properties": {
+								"branchid": {
+									"example": "any"
+								},
+								"lang": {
+									"example": "any"
+								},
+								"transactionid": {
+									"example": "any"
+								}
+							}
+						}
+					}
+				],
+				"responses": {
+					"default": {
+						"description": ""
+					}
+				}
+			}
+		},
+		"/api/getoperatorrole": {
+			"post": {
+				"tags": ["Counter"],
+				"description": "",
+				"parameters": [
+					{
+						"name": "body",
+						"in": "body",
+						"schema": {
+							"type": "object",
+							"properties": {
+								"branchid": {
+									"example": "any"
+								},
+								"username": {
+									"example": "any"
+								},
+								"lang": {
+									"example": "any"
+								},
+								"transactionid": {
+									"example": "any"
+								}
+							}
+						}
+					}
+				],
+				"responses": {
+					"default": {
+						"description": ""
+					}
+				}
+			}
+		},
+		"/api/opencounter": {
+			"post": {
+				"tags": ["Counter"],
+				"description": "",
+				"parameters": [
+					{
+						"name": "body",
+						"in": "body",
+						"schema": {
+							"type": "object",
+							"properties": {
+								"lang": {
+									"example": "any"
+								},
+								"transactionid": {
+									"example": "any"
+								},
+								"userid": {
+									"example": "any"
+								},
+								"admode": {
+									"example": "any"
+								},
+								"branchid": {
+									"example": "any"
+								},
+								"counternumber": {
+									"example": "any"
+								},
+								"username": {
+									"example": "any"
+								},
+								"password": {
+									"example": "any"
+								}
+							}
+						}
+					}
+				],
+				"responses": {
+					"default": {
+						"description": ""
+					}
+				}
+			}
+		},
+		"/api/closecounter": {
+			"post": {
+				"tags": ["Counter"],
+				"description": "",
+				"parameters": [
+					{
+						"name": "body",
+						"in": "body",
+						"schema": {
+							"type": "object",
+							"properties": {
+								"branchid": {
+									"example": "any"
+								},
+								"counterid": {
+									"example": "any"
+								},
+								"lang": {
+									"example": "any"
+								},
+								"transactionid": {
+									"example": "any"
+								},
+								"userid": {
+									"example": "any"
+								},
+								"reason": {
+									"example": "any"
+								}
+							}
+						}
+					}
+				],
+				"responses": {
+					"default": {
+						"description": ""
+					}
+				}
+			}
+		},
+		"/api/noshowticket": {
+			"post": {
+				"tags": ["Ticket"],
+				"description": "",
+				"parameters": [
+					{
+						"name": "body",
+						"in": "body",
+						"schema": {
+							"type": "object",
+							"properties": {
+								"branchid": {
+									"example": "any"
+								},
+								"counterid": {
+									"example": "any"
+								},
+								"ticketnumber": {
+									"example": "any"
+								},
+								"lang": {
+									"example": "any"
+								},
+								"userid": {
+									"example": "any"
+								},
+								"ticketprefix": {
+									"example": "any"
+								},
+								"transactionid": {
+									"example": "any"
+								}
+							}
+						}
+					}
+				],
+				"responses": {
+					"default": {
+						"description": ""
+					}
+				}
+			}
+		},
+		"/api/randomcallticket": {
+			"post": {
+				"tags": ["Ticket"],
+				"description": "",
+				"parameters": [
+					{
+						"name": "body",
+						"in": "body",
+						"schema": {
+							"type": "object",
+							"properties": {
+								"branchid": {
+									"example": "any"
+								},
+								"counterid": {
+									"example": "any"
+								},
+								"ticketnumber": {
+									"example": "any"
+								},
+								"lang": {
+									"example": "any"
+								},
+								"userid": {
+									"example": "any"
+								},
+								"ticketprefix": {
+									"example": "any"
+								},
+								"transactionid": {
+									"example": "any"
+								}
+							}
+						}
+					}
+				],
+				"responses": {
+					"default": {
+						"description": ""
+					}
+				}
+			}
+		},
+		"/api/setprofileid": {
+			"post": {
+				"tags": ["Counter"],
+				"description": "",
+				"parameters": [
+					{
+						"name": "body",
+						"in": "body",
+						"schema": {
+							"type": "object",
+							"properties": {
+								"branchid": {
+									"example": "any"
+								},
+								"counterid": {
+									"example": "any"
+								},
+								"profileid": {
+									"example": "any"
+								},
+								"lang": {
+									"example": "any"
+								},
+								"userid": {
+									"example": "any"
+								},
+								"transactionid": {
+									"example": "any"
+								}
+							}
+						}
+					}
+				],
+				"responses": {
+					"default": {
+						"description": ""
+					}
+				}
+			}
+		},
+		"/api/getcategorywaitinglist": {
+			"get": {
+				"tags": ["Branch"],
+				"description": "",
+				"parameters": [
+					{
+						"name": "branchid",
+						"in": "query",
+						"type": "string"
+					},
+					{
+						"name": "lang",
+						"in": "query",
+						"type": "string"
+					},
+					{
+						"name": "transactionid",
+						"in": "query",
+						"type": "string"
+					}
+				],
+				"responses": {
+					"default": {
+						"description": ""
+					}
+				}
+			}
+		},
+		"/api/startpostprocessingticket": {
+			"post": {
+				"tags": ["Ticket"],
+				"description": "",
+				"parameters": [
+					{
+						"name": "body",
+						"in": "body",
+						"schema": {
+							"type": "object",
+							"properties": {
+								"posttype": {
+									"example": "any"
+								},
+								"branchid": {
+									"example": "any"
+								},
+								"counterid": {
+									"example": "any"
+								},
+								"lang": {
+									"example": "any"
+								},
+								"userid": {
+									"example": "any"
+								},
+								"transactionid": {
+									"example": "any"
+								}
+							}
+						}
+					}
+				],
+				"responses": {
+					"default": {
+						"description": ""
+					}
+				}
+			}
+		},
+		"/api/endpostprocessingticket": {
+			"post": {
+				"tags": ["Ticket"],
+				"description": "",
+				"parameters": [
+					{
+						"name": "body",
+						"in": "body",
+						"schema": {
+							"type": "object",
+							"properties": {
+								"posttype": {
+									"example": "any"
+								},
+								"branchid": {
+									"example": "any"
+								},
+								"counterid": {
+									"example": "any"
+								},
+								"lang": {
+									"example": "any"
+								},
+								"userid": {
+									"example": "any"
+								},
+								"transactionid": {
+									"example": "any"
+								}
+							}
+						}
+					}
+				],
+				"responses": {
+					"default": {
+						"description": ""
+					}
+				}
+			}
+		},
+		"/api/getcounterinfo": {
+			"post": {
+				"tags": ["Counter"],
+				"description": "",
+				"parameters": [
+					{
+						"name": "body",
+						"in": "body",
+						"schema": {
+							"type": "object",
+							"properties": {
+								"branchid": {
+									"example": "any"
+								},
+								"counternumber": {
+									"example": "any"
+								},
+								"lang": {
+									"example": "any"
+								},
+								"userid": {
+									"example": "any"
+								},
+								"requested_tags": {
+									"example": "any"
+								},
+								"transactionid": {
+									"example": "any"
+								}
+							}
+						}
+					}
+				],
+				"responses": {
+					"default": {
+						"description": ""
+					}
+				}
+			}
+		},
+		"/api/issueticketwithjourney": {
+			"post": {
+				"tags": ["Ticket"],
+				"description": "",
+				"parameters": [
+					{
+						"name": "body",
+						"in": "body",
+						"schema": {
+							"type": "object",
+							"properties": {
+								"branchid": {
+									"example": "any"
+								},
+								"categoryname": {
+									"example": "any"
+								},
+								"requestdata": {
+									"example": "any"
+								},
+								"journey": {
+									"example": "any"
+								},
+								"lang": {
+									"example": "any"
+								},
+								"userid": {
+									"example": "any"
+								},
+								"priority": {
+									"example": "any"
+								},
+								"devicetype": {
+									"example": "any"
+								},
+								"customerid": {
+									"example": "any"
+								},
+								"recordid": {
+									"example": "any"
+								},
+								"mannualticketnumber": {
+									"example": "any"
+								},
+								"transactionid": {
+									"example": "any"
+								},
+								"visitentry": {
+									"example": "any"
+								}
+							}
+						}
+					}
+				],
+				"responses": {
+					"default": {
+						"description": ""
+					}
+				}
+			}
+		},
+		"/api/getcategories": {
+			"post": {
+				"tags": ["Branch"],
+				"description": "",
+				"parameters": [
+					{
+						"name": "body",
+						"in": "body",
+						"schema": {
+							"type": "object",
+							"properties": {
+								"branchcode": {
+									"example": "any"
+								},
+								"lang": {
+									"example": "any"
+								},
+								"transactionid": {
+									"example": "any"
+								}
+							}
+						}
+					}
+				],
+				"responses": {
+					"default": {
+						"description": ""
+					}
+				}
+			}
+		},
+		"/api/activecountersdata": {
+			"post": {
+				"tags": ["Counter"],
+				"description": "",
+				"parameters": [
+					{
+						"name": "body",
+						"in": "body",
+						"schema": {
+							"type": "object",
+							"properties": {
+								"branchid": {
+									"example": "any"
+								},
+								"lang": {
+									"example": "any"
+								},
+								"transactionid": {
+									"example": "any"
+								},
+								"userid": {
+									"example": "any"
+								}
+							}
+						}
+					}
+				],
+				"responses": {
+					"default": {
+						"description": ""
+					}
+				}
+			}
+		},
+		"/api/getclientregiondata": {
+			"post": {
+				"tags": ["Branch"],
+				"description": "",
+				"parameters": [
+					{
+						"name": "sid",
+						"in": "header",
+						"type": "string"
+					},
+					{
+						"name": "body",
+						"in": "body",
+						"schema": {
+							"type": "object",
+							"properties": {
+								"transactionid": {
+									"example": "any"
+								},
+								"lang": {
+									"example": "any"
+								},
+								"clientid": {
+									"example": "any"
+								},
+								"branchid": {
+									"example": "any"
+								},
+								"req.headers": {
+									"example": "any"
+								}
+							}
+						}
+					}
+				],
+				"responses": {
+					"default": {
+						"description": ""
+					}
+				}
+			}
+		},
+		"/api/insertcustomervisit": {
+			"get": {
+				"tags": ["Customer"],
+				"description": "",
+				"parameters": [
+					{
+						"name": "lang",
+						"in": "query",
+						"type": "string"
+					},
+					{
+						"name": "transactionid",
+						"in": "query",
+						"type": "string"
+					},
+					{
+						"name": "customerid",
+						"in": "query",
+						"type": "string"
+					},
+					{
+						"name": "branchid",
+						"in": "query",
+						"type": "string"
+					},
+					{
+						"name": "sessionid",
+						"in": "query",
+						"type": "string"
+					},
+					{
+						"name": "ticketid",
+						"in": "query",
+						"type": "string"
+					},
+					{
+						"name": "recordid",
+						"in": "query",
+						"type": "string"
+					}
+				],
+				"responses": {
+					"default": {
+						"description": ""
+					}
+				}
+			}
+		},
+		"/api/checkcustomervisit": {
+			"get": {
+				"tags": ["Customer"],
+				"description": "",
+				"parameters": [
+					{
+						"name": "lang",
+						"in": "query",
+						"type": "string"
+					},
+					{
+						"name": "customerid",
+						"in": "query",
+						"type": "string"
+					},
+					{
+						"name": "branchid",
+						"in": "query",
+						"type": "string"
+					}
+				],
+				"responses": {
+					"default": {
+						"description": ""
+					}
+				}
+			}
+		},
+		"/api/setpayload": {
+			"post": {
+				"tags": ["Ticket"],
+				"description": "",
+				"parameters": [
+					{
+						"name": "body",
+						"in": "body",
+						"schema": {
+							"type": "object",
+							"properties": {
+								"lang": {
+									"example": "any"
+								},
+								"ticketid": {
+									"example": "any"
+								},
+								"branchid": {
+									"example": "any"
+								},
+								"counterid": {
+									"example": "any"
+								},
+								"payload": {
+									"example": "any"
+								},
+								"transactionid": {
+									"example": "any"
+								},
+								"userid": {
+									"example": "any"
+								}
+							}
+						}
+					}
+				],
+				"responses": {
+					"default": {
+						"description": ""
+					}
+				}
+			}
+		},
+		"/api/getticketdetailsbyticketnumber": {
+			"get": {
+				"tags": ["Ticket"],
+				"description": "",
+				"parameters": [
+					{
+						"name": "ticketnumber",
+						"in": "query",
+						"type": "string"
+					},
+					{
+						"name": "branchid",
+						"in": "query",
+						"type": "string"
+					},
+					{
+						"name": "lang",
+						"in": "query",
+						"type": "string"
+					},
+					{
+						"name": "transactionid",
+						"in": "query",
+						"type": "string"
+					}
+				],
+				"responses": {
+					"default": {
+						"description": ""
+					}
+				}
+			}
+		},
+		"/api/updatereissuestatus": {
+			"get": {
+				"tags": ["Ticket"],
+				"description": "",
+				"parameters": [
+					{
+						"name": "serverticketid",
+						"in": "query",
+						"type": "string"
+					},
+					{
+						"name": "branchid",
+						"in": "query",
+						"type": "string"
+					},
+					{
+						"name": "lang",
+						"in": "query",
+						"type": "string"
+					},
+					{
+						"name": "transactionid",
+						"in": "query",
+						"type": "string"
+					}
+				],
+				"responses": {
+					"default": {
+						"description": ""
+					}
+				}
+			}
+		},
+		"/api/userbranchtransfer": {
+			"post": {
+				"tags": ["Branch"],
+				"description": "",
+				"parameters": [
+					{
+						"name": "body",
+						"in": "body",
+						"schema": {
+							"type": "object",
+							"properties": {
+								"username": {
+									"example": "any"
+								},
+								"password": {
+									"example": "any"
+								},
+								"branchid": {
+									"example": "any"
+								},
+								"lang": {
+									"example": "any"
+								},
+								"transactionid": {
+									"example": "any"
+								},
+								"userid": {
+									"example": "any"
+								}
+							}
+						}
+					}
+				],
+				"responses": {
+					"default": {
+						"description": ""
+					}
+				}
+			}
+		},
+		"/api/getengineconfiguration": {
+			"post": {
+				"tags": ["Branch"],
+				"description": "",
+				"parameters": [
+					{
+						"name": "body",
+						"in": "body",
+						"schema": {
+							"type": "object",
+							"properties": {
+								"requested_fields": {
+									"example": "any"
+								},
+								"branchid": {
+									"example": "any"
+								},
+								"lang": {
+									"example": "any"
+								},
+								"transactionid": {
+									"example": "any"
+								},
+								"userid": {
+									"example": "any"
+								}
+							}
+						}
+					}
+				],
+				"responses": {
+					"default": {
+						"description": ""
+					}
+				}
+			}
+		},
+		"/api/silentrandomcallticket": {
+			"post": {
+				"tags": ["Ticket"],
+				"description": "",
+				"parameters": [
+					{
+						"name": "body",
+						"in": "body",
+						"schema": {
+							"type": "object",
+							"properties": {
+								"categoryname": {
+									"example": "any"
+								},
+								"priority": {
+									"example": "any"
+								},
+								"requestdata": {
+									"example": "any"
+								},
+								"devicetype": {
+									"example": "any"
+								},
+								"counterid": {
+									"example": "any"
+								},
+								"branchid": {
+									"example": "any"
+								},
+								"lang": {
+									"example": "any"
+								},
+								"transactionid": {
+									"example": "any"
+								},
+								"userid": {
+									"example": "any"
+								}
+							}
+						}
+					}
+				],
+				"responses": {
+					"default": {
+						"description": ""
+					}
+				}
+			}
+		},
+		"/api/getbranchip": {
+			"post": {
+				"tags": ["Branch"],
+				"description": "",
+				"parameters": [
+					{
+						"name": "body",
+						"in": "body",
+						"schema": {
+							"type": "object",
+							"properties": {
+								"transactionid": {
+									"example": "any"
+								},
+								"lang": {
+									"example": "any"
+								},
+								"branchid": {
+									"example": "any"
+								}
+							}
+						}
+					}
+				],
+				"responses": {
+					"default": {
+						"description": ""
+					}
+				}
+			}
+		},
+		"/api/getcountersdata": {
+			"get": {
+				"tags": ["Counter"],
+				"description": "",
+				"parameters": [
+					{
+						"name": "transactionid",
+						"in": "query",
+						"type": "string"
+					},
+					{
+						"name": "lang",
+						"in": "query",
+						"type": "string"
+					},
+					{
+						"name": "branchid",
+						"in": "query",
+						"type": "string"
+					}
+				],
+				"responses": {
+					"default": {
+						"description": ""
+					}
+				}
+			}
+		},
+		"/api/getcounters": {
+			"get": {
+				"tags": ["Counter"],
+				"description": "",
+				"parameters": [
+					{
+						"name": "transactionid",
+						"in": "query",
+						"type": "string"
+					},
+					{
+						"name": "lang",
+						"in": "query",
+						"type": "string"
+					},
+					{
+						"name": "branchid",
+						"in": "query",
+						"type": "string"
+					}
+				],
+				"responses": {
+					"default": {
+						"description": ""
+					}
+				}
+			}
+		},
+		"/api/counterstartactivity": {
+			"post": {
+				"tags": ["Counter"],
+				"description": "",
+				"parameters": [
+					{
+						"name": "body",
+						"in": "body",
+						"schema": {
+							"type": "object",
+							"properties": {
+								"activityid": {
+									"example": "any"
+								},
+								"counterid": {
+									"example": "any"
+								},
+								"branchid": {
+									"example": "any"
+								},
+								"lang": {
+									"example": "any"
+								},
+								"transactionid": {
+									"example": "any"
+								},
+								"userid": {
+									"example": "any"
+								}
+							}
+						}
+					}
+				],
+				"responses": {
+					"default": {
+						"description": ""
+					}
+				}
+			}
+		},
+		"/api/counterendactivity": {
+			"post": {
+				"tags": ["Counter"],
+				"description": "",
+				"parameters": [
+					{
+						"name": "body",
+						"in": "body",
+						"schema": {
+							"type": "object",
+							"properties": {
+								"counterid": {
+									"example": "any"
+								},
+								"branchid": {
+									"example": "any"
+								},
+								"lang": {
+									"example": "any"
+								},
+								"transactionid": {
+									"example": "any"
+								},
+								"userid": {
+									"example": "any"
+								}
+							}
+						}
+					}
+				],
+				"responses": {
+					"default": {
+						"description": ""
+					}
+				}
+			}
+		},
+		"/api/getapptcategories": {
+			"get": {
+				"tags": ["Appointment"],
+				"summary": "Get Appointment Categories",
+				"description": "",
+				"parameters": [
+					{
+						"name": "lang",
+						"in": "query",
+						"type": "string"
+					},
+					{
+						"name": "branchid",
+						"in": "query",
+						"type": "string"
+					},
+					{
+						"name": "groupwisedata",
+						"in": "query",
+						"type": "string"
+					},
+					{
+						"name": "transactionid",
+						"in": "query",
+						"type": "string"
+					},
+					{
+						"name": "categoryid",
+						"in": "query",
+						"type": "string"
+					},
+					{
+						"name": "branchcode",
+						"in": "query",
+						"type": "string"
+					},
+					{
+						"name": "matterlistenable",
+						"in": "query",
+						"type": "string"
+					},
+					{
+						"name": "mode",
+						"in": "query",
+						"type": "string"
+					}
+				],
+				"responses": {
+					"default": {
+						"description": ""
+					}
+				}
+			}
+		},
+		"/api/getalldaysslotsofbranch": {
+			"get": {
+				"tags": ["Branch"],
+				"description": "Fetches all time slots for multiple days of a branch based on input filters.",
+				"parameters": [
+					{
+						"name": "branchid",
+						"in": "query",
+						"required": true,
+						"type": "string"
+					},
+					{
+						"name": "categoryid",
+						"in": "query",
+						"required": true,
+						"type": "string"
+					},
+					{
+						"name": "appointmentdate",
+						"in": "query",
+						"required": false,
+						"type": "string",
+						"format": "date"
+					},
+					{
+						"name": "appointmentaheaddays",
+						"in": "query",
+						"required": false,
+						"type": "string"
+					},
+					{
+						"name": "transactionid",
+						"in": "query",
+						"required": false,
+						"type": "string"
+					},
+					{
+						"name": "categorywise",
+						"in": "query",
+						"required": false,
+						"type": "string"
+					},
+					{
+						"name": "lang",
+						"in": "query",
+						"required": false,
+						"type": "string"
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "Successful response with slot data",
+						"schema": {
+							"type": "object",
+							"properties": {
+								"responseCode": {
+									"type": "integer",
+									"example": 200
+								},
+								"status": {
+									"type": "string",
+									"example": "Success"
+								},
+								"message": {
+									"type": "string",
+									"example": "Data successfully fetched"
+								},
+								"transactionID": {
+									"type": "string",
+									"example": "b4759c4148fc41cb8fe686f72221433220250611190124713"
+								},
+								"data": {
+									"type": "array",
+									"items": {
+										"type": "object",
+										"properties": {
+											"date": {
+												"type": "string",
+												"example": "06/11/2025"
+											},
+											"dayID": {
+												"type": "integer",
+												"example": 3
+											},
+											"slotDetail": {
+												"type": "array",
+												"items": {
+													"type": "object",
+													"properties": {
+														"slotID": {
+															"type": "string",
+															"example": "23069124"
+														},
+														"slotCaption": {
+															"type": "string",
+															"example": "15:10-15:19"
+														},
+														"startTime": {
+															"type": "string",
+															"example": "15:10"
+														},
+														"endTime": {
+															"type": "string",
+															"example": "15:19"
+														}
+													}
+												}
+											}
+										}
+									}
+								}
+							}
+						}
+					},
+					"404": {
+						"description": "Not Found - No data available",
+						"schema": {
+							"type": "object",
+							"properties": {
+								"responseCode": {
+									"type": "integer",
+									"example": 404
+								},
+								"status": {
+									"type": "string",
+									"example": "Failure"
+								},
+								"message": {
+									"type": "string",
+									"example": "No slots found for given input"
+								},
+								"transactionID": {
+									"type": "string",
+									"example": "b4759c4148fc41cb8fe686f72221433220250611190124713"
+								}
+							}
+						}
+					},
+					"500": {
+						"description": "Internal Server Error",
+						"schema": {
+							"type": "object",
+							"properties": {
+								"responseCode": {
+									"type": "integer",
+									"example": 500
+								},
+								"status": {
+									"type": "string",
+									"example": "Error"
+								},
+								"message": {
+									"type": "string",
+									"example": "Unexpected error occurred"
+								},
+								"transactionID": {
+									"type": "string",
+									"example": "b4759c4148fc41cb8fe686f72221433220250611190124713"
+								}
+							}
+						}
+					}
+				}
+			}
+		},
+		"/api/getslotdetail": {
+			"get": {
+				"tags": ["Branch"],
+				"description": "Fetches detailed information for a given slot using slot ID and transaction ID.",
+				"produces": ["application/json"],
+				"parameters": [
+					{
+						"name": "slotid",
+						"in": "query",
+						"description": "Unique identifier of the slot.",
+						"required": true,
+						"type": "string"
+					},
+					{
+						"name": "transactionid",
+						"in": "query",
+						"description": "Unique identifier for the transaction.",
+						"required": true,
+						"type": "string"
+					},
+					{
+						"name": "lang",
+						"in": "query",
+						"description": "Optional language code for localization (e.g., 'en', 'ur').",
+						"required": false,
+						"type": "string"
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "Successful response with slot details",
+						"schema": {
+							"type": "object",
+							"properties": {
+								"responseCode": {
+									"type": "integer",
+									"example": 200
+								},
+								"status": {
+									"type": "string",
+									"example": "Success"
+								},
+								"message": {
+									"type": "string",
+									"example": "Data successfully fetched"
+								},
+								"transactionID": {
+									"type": "string",
+									"example": "6e5502731cf9448cacd081d0ec530bbd20250612090725692"
+								},
+								"data": {
+									"type": "array",
+									"items": {
+										"type": "object",
+										"properties": {
+											"dayID": {
+												"type": "integer",
+												"example": 3
+											},
+											"date": {
+												"type": "string",
+												"example": "06/12/2025"
+											},
+											"slotDetail": {
+												"type": "array",
+												"items": {
+													"type": "object",
+													"properties": {
+														"slotID": {
+															"type": "string",
+															"example": "23069124"
+														},
+														"slotCaption": {
+															"type": "string",
+															"example": "15:10-15:19"
+														},
+														"startTime": {
+															"type": "string",
+															"example": "15:10"
+														},
+														"endTime": {
+															"type": "string",
+															"example": "15:19"
+														}
+													}
+												}
+											}
+										}
+									}
+								}
+							}
+						}
+					},
+					"400": {
+						"description": "Invalid request parameters"
+					},
+					"500": {
+						"description": "Internal server error"
+					}
+				}
+			}
+		},
+		"/api/getdisableddates": {
+			"get": {
+				"tags": ["Branch"],
+				"description": "Returns disabled appointment dates and off-days for a specific branch and category.",
+				"parameters": [
+					{
+						"name": "branchid",
+						"in": "query",
+						"type": "string",
+						"required": true
+					},
+					{
+						"name": "categoryid",
+						"in": "query",
+						"type": "string",
+						"required": true
+					},
+					{
+						"name": "daysinfo",
+						"in": "query",
+						"type": "string"
+					},
+					{
+						"name": "transactionid",
+						"in": "query",
+						"type": "string"
+					},
+					{
+						"name": "lang",
+						"in": "query",
+						"type": "string"
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "Success",
+						"schema": {
+							"type": "object",
+							"properties": {
+								"responseCode": {
+									"type": "integer",
+									"example": 200
+								},
+								"status": {
+									"type": "string",
+									"example": "Success"
+								},
+								"message": {
+									"type": "string",
+									"example": "Data successfully fetched"
+								},
+								"transactionID": {
+									"type": "string",
+									"example": "7b458a18f1e4430ab0e2f143103c059820250617120438669"
+								},
+								"data": {
+									"type": "object",
+									"properties": {
+										"MinDate": {
+											"type": "string",
+											"example": "06/17/2025"
+										},
+										"offDates": {
+											"type": "array",
+											"items": {
+												"type": "string",
+												"example": "06/18/2025"
+											}
+										},
+										"MaxDate": {
+											"type": "string",
+											"example": "07/08/2025"
+										},
+										"offDays": {
+											"type": "array",
+											"items": {
+												"type": "string"
+											}
+										}
+									}
+								}
+							}
+						}
+					},
+					"400": {
+						"description": "Invalid parameters"
+					},
+					"500": {
+						"description": "Internal server error"
+					}
+				}
+			}
+		},
+		"/api/getnearestbranches": {
+			"get": {
+				"tags": ["Branch"],
+				"summary": "Fetch nearest branches with available slot info",
+				"description": "Returns a list of nearest branches with detailed information including slot timings and translations.",
+				"parameters": [
+					{
+						"name": "devicetype",
+						"in": "query",
+						"type": "string"
+					},
+					{
+						"name": "regionid",
+						"in": "query",
+						"type": "string"
+					},
+					{
+						"name": "radius",
+						"in": "query",
+						"type": "string"
+					},
+					{
+						"name": "maxrow",
+						"in": "query",
+						"type": "string"
+					},
+					{
+						"name": "lat",
+						"in": "query",
+						"type": "string",
+						"required": true
+					},
+					{
+						"name": "long",
+						"in": "query",
+						"type": "string",
+						"required": true
+					},
+					{
+						"name": "categoryid",
+						"in": "query",
+						"type": "string",
+						"required": true
+					},
+					{
+						"name": "transactionid",
+						"in": "query",
+						"type": "string"
+					},
+					{
+						"name": "lang",
+						"in": "query",
+						"type": "string"
+					},
+					{
+						"name": "branchid",
+						"in": "query",
+						"type": "string"
+					},
+					{
+						"name": "branchcode",
+						"in": "query",
+						"type": "string"
+					},
+					{
+						"name": "isexcludedcategory",
+						"in": "query",
+						"type": "string"
+					},
+					{
+						"name": "prioritylevel",
+						"in": "query",
+						"type": "string"
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "Successful response with branch and slot data",
+						"schema": {
+							"type": "object",
+							"properties": {
+								"responseCode": {
+									"type": "integer",
+									"example": 200
+								},
+								"status": {
+									"type": "string",
+									"example": "Success"
+								},
+								"message": {
+									"type": "string",
+									"example": "Data successfully fetched"
+								},
+								"transactionID": {
+									"type": "string"
+								},
+								"data": {
+									"type": "array",
+									"items": {
+										"type": "object",
+										"properties": {
+											"clientid": {
+												"type": "integer"
+											},
+											"branchID": {
+												"type": "string"
+											},
+											"branchTitle": {
+												"type": "string"
+											},
+											"branchCode": {
+												"type": "string"
+											},
+											"encbranchCode": {
+												"type": "string"
+											},
+											"address": {
+												"type": "string"
+											},
+											"branchStartTime": {
+												"type": "string"
+											},
+											"branchEndTime": {
+												"type": "string"
+											},
+											"currentTime": {
+												"type": "string"
+											},
+											"contactNo": {
+												"type": "string"
+											},
+											"resultant": {
+												"type": "string"
+											},
+											"futureDaysForAppointment": {
+												"type": ["integer", "null"]
+											},
+											"latitude": {
+												"type": "number",
+												"format": "float"
+											},
+											"longitude": {
+												"type": "number",
+												"format": "float"
+											},
+											"distanceInKM": {
+												"type": "number",
+												"format": "float"
+											},
+											"status": {
+												"type": "integer"
+											},
+											"langCode": {
+												"type": "string"
+											},
+											"regionid": {
+												"type": "integer"
+											},
+											"categoryid": {
+												"type": "string"
+											},
+											"slotDetail": {
+												"type": "object",
+												"properties": {
+													"slotID": {
+														"type": ["integer", "null"]
+													},
+													"slotDate": {
+														"type": "string"
+													},
+													"startTime": {
+														"type": "string"
+													},
+													"endTime": {
+														"type": "string"
+													}
+												}
+											},
+											"holiday": {
+												"type": "string"
+											},
+											"branchTranslations": {
+												"type": "object",
+												"additionalProperties": {
+													"type": "string"
+												}
+											},
+											"categoryActive": {
+												"type": "integer"
+											},
+											"branchAddressTranslations": {
+												"type": "object",
+												"additionalProperties": {
+													"type": "string"
+												}
+											},
+											"categoryInfo": {
+												"type": ["object", "null"],
+												"properties": {
+													"categoryname": {
+														"type": "string"
+													},
+													"estwaittime": {
+														"type": "integer"
+													},
+													"positionInQueue": {
+														"type": "integer"
+													}
+												}
+											}
+										}
+									}
+								}
+							}
+						}
+					},
+					"default": {
+						"description": "Unexpected error",
+						"schema": {
+							"type": "object",
+							"properties": {
+								"responseCode": {
+									"type": "integer"
+								},
+								"status": {
+									"type": "string"
+								},
+								"message": {
+									"type": "string"
+								}
+							}
+						}
+					}
+				}
+			}
+		},
+		"/api/getbranchlist": {
+			"get": {
+				"tags": ["Branch"],
+				"description": "Returns the list of branches with details like contact, timing, coordinates, and translations.",
+				"produces": ["application/json"],
+				"parameters": [
+					{
+						"name": "devicetype",
+						"in": "query",
+						"type": "string",
+						"required": false
+					},
+					{
+						"name": "lang",
+						"in": "query",
+						"type": "string",
+						"required": false
+					},
+					{
+						"name": "regionid",
+						"in": "query",
+						"type": "string",
+						"required": false
+					},
+					{
+						"name": "transactionid",
+						"in": "query",
+						"type": "string",
+						"required": false
+					},
+					{
+						"name": "branchid",
+						"in": "query",
+						"type": "string",
+						"required": false
+					},
+					{
+						"name": "branchcode",
+						"in": "query",
+						"type": "string",
+						"required": false
+					},
+					{
+						"name": "lat",
+						"in": "query",
+						"type": "string",
+						"required": false
+					},
+					{
+						"name": "long",
+						"in": "query",
+						"type": "string",
+						"required": false
+					},
+					{
+						"name": "method",
+						"in": "query",
+						"type": "string",
+						"required": false
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "Successful response with branch list",
+						"schema": {
+							"type": "object",
+							"properties": {
+								"responseCode": {
+									"type": "integer",
+									"example": 200
+								},
+								"status": {
+									"type": "string",
+									"example": "Success"
+								},
+								"message": {
+									"type": "string",
+									"example": "Data successfully fetched"
+								},
+								"transactionID": {
+									"type": "string",
+									"example": "b1617bc302c64616aa9bbb67e58a029b20250612091950314"
+								},
+								"data": {
+									"type": "array",
+									"items": {
+										"type": "object",
+										"properties": {
+											"clientid": {
+												"type": "integer"
+											},
+											"branchID": {
+												"type": "string"
+											},
+											"branchTitle": {
+												"type": "string"
+											},
+											"branchCode": {
+												"type": "string"
+											},
+											"encbranchCode": {
+												"type": "string"
+											},
+											"address": {
+												"type": "string"
+											},
+											"branchStartTime": {
+												"type": "string"
+											},
+											"branchEndTime": {
+												"type": "string"
+											},
+											"currentTime": {
+												"type": "string"
+											},
+											"contactNo": {
+												"type": "string"
+											},
+											"resultant": {
+												"type": "string"
+											},
+											"futureDaysForAppointment": {
+												"type": ["integer", "null"]
+											},
+											"latitude": {
+												"type": "number"
+											},
+											"longitude": {
+												"type": "number"
+											},
+											"distanceInKM": {
+												"type": "number"
+											},
+											"status": {
+												"type": "integer"
+											},
+											"langCode": {
+												"type": "string"
+											},
+											"regionid": {
+												"type": "integer"
+											},
+											"categoryid": {
+												"type": "string"
+											},
+											"slotDetail": {
+												"type": "object",
+												"properties": {
+													"slotID": {
+														"type": ["string", "null"]
+													},
+													"slotDate": {
+														"type": "string"
+													},
+													"startTime": {
+														"type": "string"
+													},
+													"endTime": {
+														"type": "string"
+													}
+												}
+											},
+											"holiday": {
+												"type": "string"
+											},
+											"branchTranslations": {
+												"type": "object",
+												"additionalProperties": {
+													"type": "string"
+												}
+											}
+										}
+									}
+								}
+							}
+						}
+					},
+					"404": {
+						"description": "Branch data not found"
+					},
+					"500": {
+						"description": "Internal server error"
+					}
+				}
+			}
+		},
+		"/api/getbranchlistbycategory": {
+			"get": {
+				"tags": ["Branch"],
+				"description": "",
+				"parameters": [
+					{
+						"name": "lang",
+						"in": "query",
+						"type": "string"
+					},
+					{
+						"name": "devicetype",
+						"in": "query",
+						"type": "string"
+					},
+					{
+						"name": "categoryid",
+						"in": "query",
+						"type": "string"
+					},
+					{
+						"name": "regionid",
+						"in": "query",
+						"type": "string"
+					},
+					{
+						"name": "transactionid",
+						"in": "query",
+						"type": "string"
+					},
+					{
+						"name": "branchid",
+						"in": "query",
+						"type": "string"
+					},
+					{
+						"name": "branchcode",
+						"in": "query",
+						"type": "string"
+					}
+				],
+				"responses": {
+					"default": {
+						"description": ""
+					}
+				}
+			}
+		},
+		"/api/issueappointmentticket": {
+			"post": {
+				"tags": ["Appointment"],
+				"description": "Issues an appointment ticket based on user input.",
+				"parameters": [
+					{
+						"name": "body",
+						"in": "body",
+						"required": true,
+						"schema": {
+							"type": "object",
+							"properties": {
+								"categoryID": {
+									"type": "string",
+									"example": "lex"
+								},
+								"branchID": {
+									"type": "string",
+									"example": "3"
+								},
+								"slotID": {
+									"type": "string",
+									"example": "23069124"
+								},
+								"deviceType": {
+									"type": "integer",
+									"example": 2
+								},
+								"appointmentDate": {
+									"type": "string",
+									"example": "06-11-2025"
+								},
+								"userId": {
+									"type": "string",
+									"example": "alex@mail.com"
+								},
+								"emailId": {
+									"type": "string",
+									"example": "alex@mail.com"
+								},
+								"isReschedule": {
+									"type": "boolean",
+									"example": false
+								},
+								"payloads": {
+									"type": "array",
+									"items": {
+										"type": "object",
+										"properties": {
+											"fieldName": {
+												"type": "string"
+											},
+											"fieldValue": {
+												"type": "string"
+											}
+										}
+									},
+									"example": [
+										{
+											"fieldName": "CustomerID",
+											"fieldValue": "S67173936990718"
+										},
+										{
+											"fieldName": "EmailId",
+											"fieldValue": "alex@mail.com"
+										}
+									]
+								},
+								"lang": {
+									"type": "string",
+									"example": "fr"
+								},
+								"slotTime": {
+									"type": "string",
+									"example": "15:10"
+								},
+								"endTime": {
+									"type": "string",
+									"example": "15:19"
+								},
+								"groupName": {
+									"type": "string",
+									"example": ""
+								}
+							},
+							"required": [
+								"categoryID",
+								"branchID",
+								"slotID",
+								"deviceType",
+								"appointmentDate",
+								"userId",
+								"emailId",
+								"isReschedule",
+								"payloads",
+								"lang",
+								"slotTime",
+								"endTime"
+							]
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "Successful appointment booking response",
+						"schema": {
+							"type": "object",
+							"properties": {
+								"responseCode": {
+									"type": "integer",
+									"example": 200
+								},
+								"status": {
+									"type": "string",
+									"example": "Success"
+								},
+								"message": {
+									"type": "string",
+									"example": "Appointment booked successfully"
+								},
+								"transactionID": {
+									"type": "string",
+									"example": "8740b611c4b9496c82321b7d8232b48e20250611190254533"
+								},
+								"data": {
+									"type": "object",
+									"properties": {
+										"categoryID": {
+											"type": "string",
+											"example": "lex"
+										},
+										"categoryTitle": {
+											"type": "string",
+											"example": "Licence Exchange"
+										},
+										"branchID": {
+											"type": "string",
+											"example": "3"
+										},
+										"appointmentNumber": {
+											"type": "string",
+											"example": "71591"
+										},
+										"slotID": {
+											"type": "string",
+											"example": "23069124"
+										},
+										"deviceType": {
+											"type": "integer",
+											"example": 2
+										},
+										"appointmentDate": {
+											"type": "string",
+											"example": "06/11/2025"
+										},
+										"userId": {
+											"type": "string",
+											"example": "alex@mail.com"
+										},
+										"isReschedule": {
+											"type": "boolean",
+											"example": false
+										},
+										"payloads": {
+											"type": "array",
+											"items": {
+												"type": "object",
+												"properties": {
+													"fieldName": {
+														"type": "string"
+													},
+													"fieldValue": {
+														"type": "string"
+													}
+												}
+											}
+										},
+										"lang": {
+											"type": "string",
+											"example": "fr"
+										},
+										"slotTime": {
+											"type": "string",
+											"example": "15:10"
+										},
+										"endTime": {
+											"type": "string",
+											"example": "15:19"
+										},
+										"groupName": {
+											"type": "string",
+											"example": ""
+										},
+										"referenceno": {
+											"type": "string",
+											"example": "71591"
+										},
+										"icsdetails": {
+											"type": "array",
+											"items": {
+												"type": "string"
+											},
+											"example": [
+												"BEGIN:VCALENDAR",
+												"METHOD:REQUEST",
+												"PRODID:Microsoft Exchange Server 2010",
+												"VERSION:2.0",
+												"BEGIN:VEVENT",
+												"ORGANIZER;CN=.;SENT-BY=mailto:alex@mail.com:mailto:alex@mail.com",
+												"ATTENDEE;ROLE=REQ-PARTICIPANT;PARTSTAT=NEEDS-ACTION;RSVP=TRUE;CN=alex@mail.com:mailto:alex@mail.com",
+												"UID:20250611T15100071591",
+												"SUMMARY:Confirmation appointment project in undefined",
+												"LOCATION:undefined",
+												"DESCRIPTION:Confirmation of Appointment at undefined",
+												"TimeZone:America/Toronto",
+												"DTSTART:20250611T151000",
+												"DTEND:20250611T151900",
+												"CLASS:PUBLIC",
+												"PRIORITY:1",
+												"TRANSP:OPAQUE",
+												"STATUS:CONFIRMED",
+												"SEQUENCE:0",
+												"END:VEVENT",
+												"END:VCALENDAR"
+											]
+										},
+										"verificationCode": {
+											"type": "string",
+											"example": "1284055"
+										}
+									}
+								}
+							}
+						}
+					},
+					"default": {
+						"description": "Unexpected error",
+						"schema": {
+							"type": "object",
+							"properties": {
+								"responseCode": {
+									"type": "integer"
+								},
+								"status": {
+									"type": "string"
+								},
+								"message": {
+									"type": "string"
+								}
+							}
+						}
+					}
+				}
+			}
+		},
+		"/api/rescheduleappointmentticket": {
+			"post": {
+				"tags": ["Appointment"],
+				"description": "Reschedules an existing appointment to a new date, time, or branch.",
+				"parameters": [
+					{
+						"name": "body",
+						"in": "body",
+						"required": true,
+						"schema": {
+							"type": "object",
+							"properties": {
+								"categoryID": {
+									"type": "string",
+									"example": "lex"
+								},
+								"branchID": {
+									"type": "string",
+									"example": "3"
+								},
+								"slotID": {
+									"type": "string",
+									"example": "23069124"
+								},
+								"deviceType": {
+									"type": "integer",
+									"example": 2
+								},
+								"appointmentDate": {
+									"type": "string",
+									"example": "06-11-2025"
+								},
+								"userId": {
+									"type": "string",
+									"example": "alex@mail.com"
+								},
+								"emailId": {
+									"type": "string",
+									"example": "alex@mail.com"
+								},
+								"isReschedule": {
+									"type": "boolean",
+									"example": true
+								},
+								"previousApptBranchId": {
+									"type": "string",
+									"example": "3"
+								},
+								"prevAppointmentNumber": {
+									"type": "string",
+									"example": "23069124"
+								},
+								"previousApptCategoryId": {
+									"type": "string",
+									"example": "lex"
+								},
+								"payloads": {
+									"type": "array",
+									"items": {
+										"type": "object",
+										"properties": {
+											"fieldName": {
+												"type": "string"
+											},
+											"fieldValue": {
+												"type": "string"
+											}
+										}
+									},
+									"example": [
+										{
+											"fieldName": "CustomerID",
+											"fieldValue": "S67173936990718"
+										},
+										{
+											"fieldName": "EmailId",
+											"fieldValue": "alex@mail.com"
+										}
+									]
+								},
+								"lang": {
+									"type": "string",
+									"example": "fr"
+								},
+								"slotTime": {
+									"type": "string",
+									"example": "15:10"
+								},
+								"endTime": {
+									"type": "string",
+									"example": "15:19"
+								},
+								"groupName": {
+									"type": "string",
+									"example": ""
+								}
+							},
+							"required": [
+								"categoryID",
+								"branchID",
+								"slotID",
+								"deviceType",
+								"appointmentDate",
+								"userId",
+								"emailId",
+								"isReschedule",
+								"payloads",
+								"lang",
+								"slotTime",
+								"endTime"
+							]
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "Appointment rescheduled successfully.",
+						"schema": {
+							"type": "object",
+							"properties": {
+								"isrescheduled": {
+									"type": "boolean",
+									"example": true
+								},
+								"rescheduledfrom": {
+									"type": "string",
+									"example": "MBT-BR-23340-355"
+								},
+								"rescheduledto": {
+									"type": "string",
+									"example": "MBT-BR-23340-400"
+								},
+								"appointmentid": {
+									"type": "integer",
+									"example": 6723
+								},
+								"categoryid": {
+									"type": "integer",
+									"example": 3
+								},
+								"branchid": {
+									"type": "integer",
+									"example": 2
+								},
+								"mobilenumber": {
+									"type": "string",
+									"example": "03001234567"
+								},
+								"appointmentdate": {
+									"type": "string",
+									"format": "date",
+									"example": "2025-06-13"
+								},
+								"slottime": {
+									"type": "string",
+									"example": "10:00 AM"
+								},
+								"endtime": {
+									"type": "string",
+									"example": "10:15 AM"
+								},
+								"appointmentnumber": {
+									"type": "string",
+									"example": "MBT-BR-23340-400"
+								},
+								"isreschedule": {
+									"type": "boolean",
+									"example": true
+								},
+								"lang": {
+									"type": "string",
+									"example": "en"
+								},
+								"transactionid": {
+									"type": "string",
+									"example": "TXN123456789"
+								}
+							}
+						}
+					},
+					"400": {
+						"description": "Invalid input or validation error"
+					},
+					"500": {
+						"description": "Internal server error"
+					}
+				}
+			}
+		},
+		"/api/cancelappointmentticket": {
+			"get": {
+				"tags": ["Appointment"],
+				"description": "Cancels an appointment using the provided appointment number. May also cancel a linked virtual meeting if configured.",
+				"parameters": [
+					{
+						"name": "transactionid",
+						"in": "query",
+						"type": "string"
+					},
+					{
+						"name": "appointmentnumber",
+						"in": "query",
+						"type": "string",
+						"required": true
+					},
+					{
+						"name": "isvirtual",
+						"in": "query",
+						"type": "boolean"
+					},
+					{
+						"name": "lang",
+						"in": "query",
+						"type": "string"
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "Appointment canceled successfully",
+						"schema": {
+							"type": "object",
+							"properties": {
+								"responseCode": {
+									"type": "integer",
+									"example": 200
+								},
+								"status": {
+									"type": "string",
+									"example": "Success"
+								},
+								"message": {
+									"type": "string",
+									"example": "Appointment cancel successfully!"
+								},
+								"transactionID": {
+									"type": "string",
+									"example": "60d45c6a5d934203a58bbbbd1e3bd44320250617123045576"
+								},
+								"data": {
+									"type": ["string", "object", "null"],
+									"example": ""
+								}
+							}
+						}
+					},
+					"400": {
+						"description": "Bad Request – Missing or invalid parameters"
+					},
+					"403": {
+						"description": "Forbidden – Appointment could not be canceled"
+					},
+					"404": {
+						"description": "Not Found – Appointment not found"
+					},
+					"500": {
+						"description": "Internal Server Error – Something went wrong"
+					}
+				}
+			}
+		},
+		"/api/cancelbulkappointmentticket": {
+			"post": {
+				"tags": ["Appointment"],
+				"description": "",
+				"responses": {
+					"default": {
+						"description": ""
+					}
+				}
+			}
+		},
+		"/api/verifyappointmentinfo": {
+			"get": {
+				"tags": ["Appointment"],
+				"description": "",
+				"parameters": [
+					{
+						"name": "lang",
+						"in": "query",
+						"type": "string"
+					},
+					{
+						"name": "transactionid",
+						"in": "query",
+						"type": "string"
+					}
+				],
+				"responses": {
+					"default": {
+						"description": ""
+					}
+				}
+			}
+		},
+		"/api/appointmentserved": {
+			"get": {
+				"tags": ["Appointment"],
+				"description": "",
+				"parameters": [
+					{
+						"name": "transactionid",
+						"in": "query",
+						"type": "string"
+					},
+					{
+						"name": "state",
+						"in": "query",
+						"type": "string"
+					},
+					{
+						"name": "appointmentnumber",
+						"in": "query",
+						"type": "string"
+					},
+					{
+						"name": "ticketnumber",
+						"in": "query",
+						"type": "string"
+					},
+					{
+						"name": "userid",
+						"in": "query",
+						"type": "string"
+					},
+					{
+						"name": "feedback",
+						"in": "query",
+						"type": "string"
+					},
+					{
+						"name": "lang",
+						"in": "query",
+						"type": "string"
+					}
+				],
+				"responses": {
+					"default": {
+						"description": ""
+					}
+				}
+			}
+		},
+		"/api/getproducttypes": {
+			"get": {
+				"tags": ["Appointment"],
+				"description": "",
+				"parameters": [
+					{
+						"name": "lang",
+						"in": "query",
+						"type": "string"
+					},
+					{
+						"name": "transactionid",
+						"in": "query",
+						"type": "string"
+					}
+				],
+				"responses": {
+					"default": {
+						"description": ""
+					}
+				}
+			}
+		},
+		"/api/getproductfamilies": {
+			"get": {
+				"tags": ["Appointment"],
+				"description": "",
+				"parameters": [
+					{
+						"name": "lang",
+						"in": "query",
+						"type": "string"
+					},
+					{
+						"name": "transactionid",
+						"in": "query",
+						"type": "string"
+					},
+					{
+						"name": "producttypeid",
+						"in": "query",
+						"type": "string"
+					}
+				],
+				"responses": {
+					"default": {
+						"description": ""
+					}
+				}
+			}
+		},
+		"/api/getphonemodels": {
+			"get": {
+				"tags": ["Appointment"],
+				"description": "",
+				"parameters": [
+					{
+						"name": "lang",
+						"in": "query",
+						"type": "string"
+					},
+					{
+						"name": "transactionid",
+						"in": "query",
+						"type": "string"
+					},
+					{
+						"name": "productfamilyid",
+						"in": "query",
+						"type": "string"
+					}
+				],
+				"responses": {
+					"default": {
+						"description": ""
+					}
+				}
+			}
+		},
+		"/api/branchevolution": {
+			"post": {
+				"tags": ["Branch"],
+				"description": "",
+				"parameters": [
+					{
+						"name": "body",
+						"in": "body",
+						"schema": {
+							"type": "object",
+							"properties": {
+								"branchid": {
+									"example": "any"
+								},
+								"from": {
+									"example": "any"
+								},
+								"to": {
+									"example": "any"
+								},
+								"type": {
+									"example": "any"
+								},
+								"category": {
+									"example": "any"
+								},
+								"lang": {
+									"example": "any"
+								},
+								"transactionid": {
+									"example": "any"
+								}
+							}
+						}
+					}
+				],
+				"responses": {
+					"default": {
+						"description": ""
+					}
+				}
+			}
+		},
+		"/api/branchticketinfo": {
+			"post": {
+				"tags": ["Branch"],
+				"description": "",
+				"parameters": [
+					{
+						"name": "body",
+						"in": "body",
+						"schema": {
+							"type": "object",
+							"properties": {
+								"branchid": {
+									"example": "any"
+								},
+								"from": {
+									"example": "any"
+								},
+								"to": {
+									"example": "any"
+								},
+								"type": {
+									"example": "any"
+								},
+								"category": {
+									"example": "any"
+								},
+								"lang": {
+									"example": "any"
+								},
+								"transactionid": {
+									"example": "any"
+								}
+							}
+						}
+					}
+				],
+				"responses": {
+					"default": {
+						"description": ""
+					}
+				}
+			}
+		},
+		"/api/tickettrackingsummary": {
+			"post": {
+				"tags": ["Ticket"],
+				"description": "",
+				"parameters": [
+					{
+						"name": "body",
+						"in": "body",
+						"schema": {
+							"type": "object",
+							"properties": {
+								"branchid": {
+									"example": "any"
+								},
+								"type": {
+									"example": "any"
+								},
+								"from": {
+									"example": "any"
+								},
+								"to": {
+									"example": "any"
+								},
+								"category": {
+									"example": "any"
+								},
+								"ticketnumber": {
+									"example": "any"
+								},
+								"ticketstatus": {
+									"example": "any"
+								},
+								"userid": {
+									"example": "any"
+								},
+								"lang": {
+									"example": "any"
+								},
+								"transactionid": {
+									"example": "any"
+								}
+							}
+						}
+					}
+				],
+				"responses": {
+					"default": {
+						"description": ""
+					}
+				}
+			}
+		},
+		"/api/getallslotsofbranch": {
+			"get": {
+				"tags": ["Branch"],
+				"description": "",
+				"parameters": [
+					{
+						"name": "branchid",
+						"in": "query",
+						"type": "string"
+					},
+					{
+						"name": "categoryid",
+						"in": "query",
+						"type": "string"
+					},
+					{
+						"name": "appointmentdate",
+						"in": "query",
+						"type": "string"
+					},
+					{
+						"name": "appointmentaheaddays",
+						"in": "query",
+						"type": "string"
+					},
+					{
+						"name": "transactionid",
+						"in": "query",
+						"type": "string"
+					},
+					{
+						"name": "lang",
+						"in": "query",
+						"type": "string"
+					}
+				],
+				"responses": {
+					"default": {
+						"description": ""
+					}
+				}
+			}
+		},
+		"/api/savecustomerdesiredappointments": {
+			"post": {
+				"tags": ["Appointment"],
+				"description": "",
+				"parameters": [
+					{
+						"name": "body",
+						"in": "body",
+						"schema": {
+							"type": "object",
+							"properties": {
+								"customername": {
+									"example": "any"
+								},
+								"branchid": {
+									"example": "any"
+								},
+								"categoryid": {
+									"example": "any"
+								},
+								"mobilenumber": {
+									"example": "any"
+								},
+								"email": {
+									"example": "any"
+								},
+								"appointmentdate": {
+									"example": "any"
+								},
+								"appointmentslot": {
+									"example": "any"
+								},
+								"lang": {
+									"example": "any"
+								}
+							}
+						}
+					}
+				],
+				"responses": {
+					"default": {
+						"description": ""
+					}
+				}
+			}
+		},
+		"/api/getappointmentdata": {
+			"post": {
+				"tags": ["Appointment"],
+				"description": "",
+				"parameters": [
+					{
+						"name": "body",
+						"in": "body",
+						"schema": {
+							"type": "object",
+							"properties": {
+								"userid": {
+									"example": "any"
+								},
+								"fid": {
+									"example": "any"
+								},
+								"lang": {
+									"example": "any"
+								},
+								"transactionid": {
+									"example": "any"
+								}
+							}
+						}
+					}
+				],
+				"responses": {
+					"default": {
+						"description": ""
+					}
+				}
+			}
+		},
+		"/api/getvirtualbranchlist": {
+			"post": {
+				"tags": ["Branch"],
+				"description": "",
+				"parameters": [
+					{
+						"name": "body",
+						"in": "body",
+						"schema": {
+							"type": "object",
+							"properties": {
+								"devicetype": {
+									"example": "any"
+								},
+								"lang": {
+									"example": "any"
+								},
+								"lat": {
+									"example": "any"
+								},
+								"lng": {
+									"example": "any"
+								},
+								"regionid": {
+									"example": "any"
+								},
+								"transactionid": {
+									"example": "any"
+								},
+								"branchid": {
+									"example": "any"
+								},
+								"branchcode": {
+									"example": "any"
+								},
+								"categories": {
+									"example": "any"
+								}
+							}
+						}
+					}
+				],
+				"responses": {
+					"default": {
+						"description": ""
+					}
+				}
+			}
+		},
+		"/api/getcustomerlist": {
+			"get": {
+				"tags": ["Customer"],
+				"description": "",
+				"parameters": [
+					{
+						"name": "lang",
+						"in": "query",
+						"type": "string"
+					},
+					{
+						"name": "transactionid",
+						"in": "query",
+						"type": "string"
+					},
+					{
+						"name": "clientid",
+						"in": "query",
+						"type": "string"
+					},
+					{
+						"name": "regionid",
+						"in": "query",
+						"type": "string"
+					},
+					{
+						"name": "pagenumber",
+						"in": "query",
+						"type": "string"
+					},
+					{
+						"name": "pagesize",
+						"in": "query",
+						"type": "string"
+					},
+					{
+						"name": "orderbycolumn",
+						"in": "query",
+						"type": "string"
+					},
+					{
+						"name": "orderdirection",
+						"in": "query",
+						"type": "string"
+					}
+				],
+				"responses": {
+					"default": {
+						"description": ""
+					}
+				}
+			}
+		},
+		"/api/addcustomer": {
+			"post": {
+				"tags": ["Customer"],
+				"description": "",
+				"parameters": [
+					{
+						"name": "body",
+						"in": "body",
+						"schema": {
+							"type": "object",
+							"properties": {
+								"transactionid": {
+									"example": "any"
+								},
+								"lang": {
+									"example": "any"
+								},
+								"customer": {
+									"example": "any"
+								}
+							}
+						}
+					}
+				],
+				"responses": {
+					"default": {
+						"description": ""
+					}
+				}
+			}
+		},
+		"/api/updatecustomer": {
+			"post": {
+				"tags": ["Customer"],
+				"description": "",
+				"parameters": [
+					{
+						"name": "body",
+						"in": "body",
+						"schema": {
+							"type": "object",
+							"properties": {
+								"transactionid": {
+									"example": "any"
+								},
+								"lang": {
+									"example": "any"
+								},
+								"customer": {
+									"example": "any"
+								}
+							}
+						}
+					}
+				],
+				"responses": {
+					"default": {
+						"description": ""
+					}
+				}
+			}
+		},
+		"/api/searchcustomerbytype": {
+			"get": {
+				"tags": ["Customer"],
+				"description": "",
+				"parameters": [
+					{
+						"name": "lang",
+						"in": "query",
+						"type": "string"
+					},
+					{
+						"name": "transactionid",
+						"in": "query",
+						"type": "string"
+					},
+					{
+						"name": "clientid",
+						"in": "query",
+						"type": "string"
+					},
+					{
+						"name": "regionid",
+						"in": "query",
+						"type": "string"
+					},
+					{
+						"name": "type",
+						"in": "query",
+						"type": "string"
+					},
+					{
+						"name": "value",
+						"in": "query",
+						"type": "string"
+					},
+					{
+						"name": "exactmatch",
+						"in": "query",
+						"type": "string"
+					},
+					{
+						"name": "pagenumber",
+						"in": "query",
+						"type": "string"
+					},
+					{
+						"name": "pagesize",
+						"in": "query",
+						"type": "string"
+					},
+					{
+						"name": "orderbycolumn",
+						"in": "query",
+						"type": "string"
+					},
+					{
+						"name": "orderdirection",
+						"in": "query",
+						"type": "string"
+					},
+					{
+						"name": "conditiontype",
+						"in": "query",
+						"type": "string"
+					},
+					{
+						"name": "branchid",
+						"in": "query",
+						"type": "string"
+					},
+					{
+						"name": "visitentry",
+						"in": "query",
+						"type": "string"
+					}
+				],
+				"responses": {
+					"default": {
+						"description": ""
+					}
+				}
+			}
+		},
+		"/api/sharecustomerinfo": {
+			"post": {
+				"tags": ["Customer"],
+				"description": "",
+				"parameters": [
+					{
+						"name": "body",
+						"in": "body",
+						"schema": {
+							"type": "object",
+							"properties": {
+								"lang": {
+									"example": "any"
+								},
+								"transactionid": {
+									"example": "any"
+								},
+								"id": {
+									"example": "any"
+								},
+								"customer_id": {
+									"example": "any"
+								},
+								"send_sms": {
+									"example": "any"
+								},
+								"send_email": {
+									"example": "any"
+								}
+							}
+						}
+					}
+				],
+				"responses": {
+					"default": {
+						"description": ""
+					}
+				}
+			}
+		},
+		"/api/sendThirdPartyAlert": {
+			"post": {
+				"tags": ["Appointment"],
+				"description": "",
+				"responses": {
+					"default": {
+						"description": ""
+					}
+				}
+			}
+		},
+		"/api/validateTicketIssuance": {
+			"post": {
+				"tags": ["Ticket"],
+				"summary": "Validate ticket issuance criteria",
+				"description": "Validates whether a ticket can be issued based on branch, category, and quota configuration.",
+				"parameters": [
+					{
+						"in": "body",
+						"name": "body",
+						"required": true,
+						"schema": {
+							"type": "object",
+							"properties": {
+								"branchid": {
+									"type": "string",
+									"example": "3",
+									"description": "Branch ID where the ticket is being issued"
+								},
+								"categorysqn": {
+									"type": "string",
+									"example": "lex",
+									"description": "Category SQN for the ticket"
+								},
+								"quotaconfig": {
+									"type": "object",
+									"properties": {
+										"validate": {
+											"type": "boolean",
+											"example": true
+										},
+										"quota_basedon": {
+											"type": "string",
+											"example": "category"
+										}
+									},
+									"description": "Quota configuration for validation"
+								},
+								"transactionid": {
+									"type": "string",
+									"example": "",
+									"description": "Optional transaction ID; if not provided, one will be generated"
+								},
+								"lang": {
+									"type": "string",
+									"example": "en",
+									"description": "Language code for translation (optional)"
+								}
+							},
+							"required": ["branchid", "categorysqn", "quotaconfig"]
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "Ticket issuance validation response",
+						"schema": {
+							"type": "object",
+							"properties": {
+								"responseCode": {
+									"type": "integer",
+									"example": 200
+								},
+								"status": {
+									"type": "string",
+									"example": "Success"
+								},
+								"message": {
+									"type": "string",
+									"example": "Validated Ticket Issuance Criteria Successfully"
+								},
+								"transactionID": {
+									"type": "string",
+									"example": "VALIDATE_TICKET_ISSUANCE_3_20250617125841750"
+								},
+								"data": {
+									"type": "object",
+									"example": {}
+								}
+							}
+						}
+					},
+					"400": {
+						"description": "Bad Request – Missing or invalid input"
+					},
+					"403": {
+						"description": "Forbidden – Validation failed due to business rules"
+					},
+					"404": {
+						"description": "Not Found – Related entity not found"
+					},
+					"422": {
+						"description": "Validation Error – Specific data constraints failed"
+					},
+					"500": {
+						"description": "Internal Server Error – Unhandled error occurred"
+					}
+				}
+			}
+		},
+		"/api/encodeURLQuery": {
+			"post": {
+				"tags": ["Appointment"],
+				"description": "",
+				"parameters": [
+					{
+						"name": "body",
+						"in": "body",
+						"schema": {
+							"type": "object",
+							"properties": {
+								"transactionid": {
+									"example": "any"
+								},
+								"data": {
+									"example": "any"
+								},
+								"lang": {
+									"example": "any"
+								}
+							}
+						}
+					}
+				],
+				"responses": {
+					"default": {
+						"description": ""
+					}
+				}
+			}
+		},
+		"/api/decodeURLQuery": {
+			"post": {
+				"tags": ["Appointment"],
+				"description": "",
+				"parameters": [
+					{
+						"name": "body",
+						"in": "body",
+						"schema": {
+							"type": "object",
+							"properties": {
+								"transactionid": {
+									"example": "any"
+								},
+								"data": {
+									"example": "any"
+								},
+								"lang": {
+									"example": "any"
+								}
+							}
+						}
+					}
+				],
+				"responses": {
+					"default": {
+						"description": ""
+					}
+				}
+			}
+		},
+		"/api/getcustomerticketbyid": {
+			"get": {
+				"tags": ["Customer"],
+				"description": "",
+				"parameters": [
+					{
+						"name": "lang",
+						"in": "query",
+						"type": "string"
+					},
+					{
+						"name": "transactionid",
+						"in": "query",
+						"type": "string"
+					},
+					{
+						"name": "visitentry",
+						"in": "query",
+						"type": "string"
+					},
+					{
+						"name": "branchid",
+						"in": "query",
+						"type": "string"
+					},
+					{
+						"name": "id",
+						"in": "query",
+						"type": "string"
+					}
+				],
+				"responses": {
+					"default": {
+						"description": ""
+					}
+				}
+			}
+		},
+		"/api/getcustomerhistory": {
+			"get": {
+				"tags": ["Customer"],
+				"description": "",
+				"parameters": [
+					{
+						"name": "lang",
+						"in": "query",
+						"type": "string"
+					},
+					{
+						"name": "transactionid",
+						"in": "query",
+						"type": "string"
+					},
+					{
+						"name": "id",
+						"in": "query",
+						"type": "string"
+					}
+				],
+				"responses": {
+					"default": {
+						"description": ""
+					}
+				}
+			}
+		},
+		"/api/addusersession": {
+			"post": {
+				"tags": ["Customer"],
+				"summary": "Add user session",
+				"description": "Creates a new user session with an expiry time and tracks activity state.",
+				"consumes": ["application/json"],
+				"produces": ["application/json"],
+				"parameters": [
+					{
+						"name": "body",
+						"in": "body",
+						"required": true,
+						"schema": {
+							"type": "object",
+							"required": ["licenseno", "userid", "expiryat"],
+							"properties": {
+								"licenseno": {
+									"type": "string",
+									"example": "ABC123456",
+									"description": "License number of the user"
+								},
+								"userid": {
+									"type": "string",
+									"example": "user_001",
+									"description": "Unique identifier for the user"
+								},
+								"expiryat": {
+									"type": "string",
+									"format": "date-time",
+									"example": "2025-06-12T23:59:59Z",
+									"description": "Expiration timestamp for the session (ISO 8601 format)"
+								}
+							}
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "Session created successfully",
+						"schema": {
+							"type": "object",
+							"properties": {
+								"responseCode": {
+									"type": "integer",
+									"example": 200
+								},
+								"status": {
+									"type": "string",
+									"example": "Success"
+								},
+								"message": {
+									"type": "string",
+									"example": "Session created successfully"
+								},
+								"requestId": {
+									"type": "string",
+									"example": "uuid-v4"
+								},
+								"data": {
+									"type": "object",
+									"properties": {
+										"SessionId": {
+											"type": "string",
+											"example": "abc123xyz"
+										},
+										"UserId": {
+											"type": "string",
+											"example": "user_001"
+										},
+										"ExpiryAt": {
+											"type": "string",
+											"format": "date-time",
+											"example": "2025-06-12T23:59:59Z"
+										},
+										"LastActivityState": {
+											"type": "string",
+											"example": "1"
+										}
+									}
+								}
+							}
+						}
+					},
+					"400": {
+						"description": "Invalid request parameters"
+					},
+					"500": {
+						"description": "Internal server error"
+					}
+				}
+			}
+		},
+		"/api/lockslot": {
+			"post": {
+				"tags": ["Branch"],
+				"summary": "Lock a slot",
+				"description": "Locks a specified slot for a customer to prevent concurrent bookings.",
+				"consumes": ["application/json"],
+				"produces": ["application/json"],
+				"parameters": [
+					{
+						"name": "body",
+						"in": "body",
+						"required": true,
+						"schema": {
+							"type": "object",
+							"required": ["slotid", "branchid", "sqn", "date"],
+							"properties": {
+								"slotid": {
+									"type": "integer",
+									"example": 4030,
+									"description": "Unique identifier of the slot to lock"
+								},
+								"branchid": {
+									"type": "integer",
+									"example": 2,
+									"description": "Branch ID where the slot is located"
+								},
+								"sqn": {
+									"type": "string",
+									"example": "DL",
+									"description": "Service queue number (category)"
+								},
+								"date": {
+									"type": "string",
+									"format": "date",
+									"example": "2025-06-12",
+									"description": "Date of the slot (yyyy-MM-dd)"
+								},
+								"lang": {
+									"type": "string",
+									"example": "en",
+									"description": "Language code for localization (optional)"
+								}
+							}
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "Slot successfully locked",
+						"schema": {
+							"type": "object",
+							"properties": {
+								"responseCode": {
+									"type": "integer",
+									"example": 200
+								},
+								"status": {
+									"type": "string",
+									"example": "Success"
+								},
+								"message": {
+									"type": "string",
+									"example": "Slot locked."
+								},
+								"transactionID": {
+									"type": "string",
+									"example": "8dc77732d5b44c80b3a54c2dfb6f464e20250612100021410"
+								},
+								"data": {
+									"type": "object",
+									"properties": {
+										"slotid": {
+											"type": "integer",
+											"example": 4030
+										},
+										"locked": {
+											"type": "boolean",
+											"example": true
+										}
+									}
+								}
+							}
+						}
+					},
+					"400": {
+						"description": "Invalid request parameters or business logic failure",
+						"schema": {
+							"type": "object",
+							"properties": {
+								"responseCode": {
+									"type": "integer",
+									"example": 400
+								},
+								"status": {
+									"type": "string",
+									"example": "Failure"
+								},
+								"message": {
+									"type": "string",
+									"example": "Maximum allowed tickets reached for this slot."
+								},
+								"transactionID": {
+									"type": "string",
+									"example": "generated-uuid"
+								}
+							}
+						}
+					},
+					"404": {
+						"description": "Slot not found or inactive"
+					},
+					"500": {
+						"description": "Internal server error",
+						"schema": {
+							"type": "object",
+							"properties": {
+								"responseCode": {
+									"type": "integer",
+									"example": 500
+								},
+								"status": {
+									"type": "string",
+									"example": "Failure"
+								},
+								"message": {
+									"type": "string",
+									"example": "Error locking slot."
+								},
+								"transactionID": {
+									"type": "string",
+									"example": "generated-uuid"
+								}
+							}
+						}
+					}
+				}
+			}
+		},
+		"/api/releaseslot": {
+			"post": {
+				"tags": ["Branch"],
+				"summary": "Release a slot",
+				"description": "Releases a previously locked appointment slot after a randomized delay.",
+				"consumes": ["application/json"],
+				"produces": ["application/json"],
+				"parameters": [
+					{
+						"name": "body",
+						"in": "body",
+						"required": true,
+						"schema": {
+							"type": "object",
+							"required": ["slotid", "branchid", "sqn", "date"],
+							"properties": {
+								"slotid": {
+									"type": "integer",
+									"example": 6913,
+									"description": "Unique identifier of the slot to release"
+								},
+								"branchid": {
+									"type": "integer",
+									"example": 2,
+									"description": "Branch ID where the slot is located"
+								},
+								"sqn": {
+									"type": "string",
+									"example": "DL",
+									"description": "Service queue number (category)"
+								},
+								"date": {
+									"type": "string",
+									"format": "date",
+									"example": "2025-06-12",
+									"description": "Date of the slot (yyyy-MM-dd)"
+								},
+								"lang": {
+									"type": "string",
+									"example": "en",
+									"description": "Language code for localization (optional)"
+								}
+							}
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "Slot release request successfully initiated",
+						"schema": {
+							"type": "object",
+							"properties": {
+								"responseCode": {
+									"type": "integer",
+									"example": 200
+								},
+								"status": {
+									"type": "string",
+									"example": "Success"
+								},
+								"message": {
+									"type": "string",
+									"example": "Slot release request initiated."
+								},
+								"transactionID": {
+									"type": "string",
+									"example": "e6c7cda6f0e44f5b9799bf03cb2f0c2320250612095538545"
+								},
+								"data": {
+									"type": "object",
+									"properties": {
+										"slotId": {
+											"type": "integer",
+											"example": 6913
+										},
+										"locked": {
+											"type": "boolean",
+											"example": false
+										},
+										"scheduledReleaseInMinutes": {
+											"type": "integer",
+											"example": 1
+										}
+									}
+								}
+							}
+						}
+					},
+					"400": {
+						"description": "Missing or invalid parameters"
+					},
+					"500": {
+						"description": "Internal server error"
+					}
+				}
+			}
+		},
+		"/api/getcustomerappointmentsdata": {
+			"post": {
+				"tags": ["Customer"],
+				"description": "Fetches customer appointment data based on various identifiers (appointment number, customer ID, phone number, email, etc.).",
+				"parameters": [
+					{
+						"name": "body",
+						"in": "body",
+						"schema": {
+							"type": "object",
+							"properties": {
+								"appointmentnumber": {
+									"type": "string",
+									"example": "71591"
+								},
+								"emailaddress": {
+									"type": "string",
+									"example": "alex@mail.com"
+								},
+								"phonenumber": {
+									"type": "string",
+									"example": "+1234567890"
+								},
+								"customerid": {
+									"type": "string",
+									"example": "S67173936990718"
+								},
+								"branchid": {
+									"type": "integer",
+									"example": 3
+								},
+								"appointmentdate": {
+									"type": "string",
+									"format": "date",
+									"example": "2025-06-11"
+								},
+								"appointmentstates": {
+									"type": "string",
+									"example": "On Time"
+								},
+								"maxappointmentcount": {
+									"type": "integer",
+									"example": 10
+								},
+								"lang": {
+									"type": "string",
+									"example": "fr"
+								},
+								"skipbranchcheck": {
+									"type": "boolean",
+									"example": false
+								},
+								"viewallappointments": {
+									"type": "boolean",
+									"example": false
+								}
+							},
+							"required": []
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "Successful retrieval of customer appointment data.",
+						"schema": {
+							"type": "object",
+							"properties": {
+								"responseCode": {
+									"type": "integer",
+									"example": 200
+								},
+								"status": {
+									"type": "string",
+									"example": "Success"
+								},
+								"message": {
+									"type": "string",
+									"example": "Customer appointment data retrieved successfully."
+								},
+								"transactionID": {
+									"type": "string",
+									"example": "b8a501d560bc4e7f8dddd4a626b7f3db20250611190846807"
+								},
+								"data": {
+									"type": "array",
+									"items": {
+										"type": "object",
+										"properties": {
+											"UserId": {
+												"type": "string",
+												"example": "iubH5+bAmD3PcuuAFbSP3Q=="
+											},
+											"AppointmentNumber": {
+												"type": "string",
+												"example": "71591"
+											},
+											"AppointmentDate": {
+												"type": "string",
+												"example": "2025-06-11"
+											},
+											"AppointmentStatus": {
+												"type": "string",
+												"example": "On Time"
+											},
+											"CategoryId": {
+												"type": "string",
+												"example": "lex"
+											},
+											"CategoryTitle": {
+												"type": "string",
+												"example": "ÉCHANGER VOTRE PERMIS"
+											},
+											"CategoryCode": {
+												"type": ["string", "null"],
+												"example": null
+											},
+											"SubOptionCode": {
+												"type": ["string", "null"],
+												"example": null
+											},
+											"Endorsement": {
+												"type": ["string", "null"],
+												"example": null
+											},
+											"BranchId": {
+												"type": "integer",
+												"example": 3
+											},
+											"BranchCode": {
+												"type": "string",
+												"example": "D31"
+											},
+											"BranchName": {
+												"type": "string",
+												"example": "Brampton"
+											},
+											"BranchAddress": {
+												"type": "string",
+												"example": "59 First Gulf Blvd, Unit 9, Brampton, L6W 4P9"
+											},
+											"TimeZone": {
+												"type": "string",
+												"example": "(EST)"
+											},
+											"SlotId": {
+												"type": "integer",
+												"example": 23069124
+											},
+											"IssueDate": {
+												"type": "string",
+												"format": "date-time",
+												"example": "2025-06-11T15:02:54"
+											},
+											"RegistrationId": {
+												"type": "string",
+												"example": "-"
+											},
+											"Active": {
+												"type": "boolean",
+												"example": true
+											},
+											"DeviceType": {
+												"type": "string",
+												"example": "2"
+											},
+											"State": {
+												"type": "integer",
+												"example": 1
+											},
+											"StateDescription": {
+												"type": "string",
+												"example": "NEW_APPOINTMENT"
+											},
+											"TicketNumber": {
+												"type": ["string", "null"],
+												"example": null
+											},
+											"CounterNumber": {
+												"type": ["string", "null"],
+												"example": null
+											},
+											"IsReminderSent": {
+												"type": ["boolean", "null"],
+												"example": null
+											},
+											"Language": {
+												"type": "string",
+												"example": "fr"
+											},
+											"StartTime": {
+												"type": "string",
+												"format": "date-time",
+												"example": "2025-06-11T15:10:00"
+											},
+											"EndTime": {
+												"type": "string",
+												"format": "date-time",
+												"example": "2025-06-11T15:19:00"
+											},
+											"TicketOrigin": {
+												"type": ["string", "null"],
+												"example": null
+											},
+											"groupName": {
+												"type": ["string", "null"],
+												"example": null
+											},
+											"VirtualType": {
+												"type": ["string", "null"],
+												"example": null
+											},
+											"VirtualID": {
+												"type": ["string", "null"],
+												"example": null
+											},
+											"isVirtual": {
+												"type": ["boolean", "null"],
+												"example": null
+											},
+											"AlertTypeID": {
+												"type": "integer",
+												"example": 3
+											},
+											"GraceTime": {
+												"type": "integer",
+												"example": 30
+											},
+											"AppointmentPayloads": {
+												"type": "array",
+												"items": {
+													"type": "object",
+													"properties": {
+														"fieldName": {
+															"type": "string",
+															"example": "CustomerID"
+														},
+														"fieldValue": {
+															"type": "string",
+															"example": "S67173936990718"
+														}
+													}
+												}
+											}
+										}
+									}
+								}
+							}
+						}
+					},
+					"400": {
+						"description": "Missing or invalid input parameters."
+					},
+					"404": {
+						"description": "No appointment data found."
+					},
+					"500": {
+						"description": "Internal server error while processing the request."
+					}
+				}
+			}
+		},
+		"/api/getappointmentavailability": {
+			"post": {
+				"tags": ["Appointment"],
+				"summary": "Get appointment slot availability",
+				"description": "Returns available and booked appointment slots for a given branch, category (SQN), and date range.",
+				"parameters": [
+					{
+						"name": "body",
+						"in": "body",
+						"required": true,
+						"schema": {
+							"type": "object",
+							"required": ["branchid", "sqn", "startdate", "daysahead"],
+							"properties": {
+								"branchid": {
+									"type": "integer",
+									"example": 60,
+									"description": "Branch ID for which availability is requested"
+								},
+								"sqn": {
+									"type": "string",
+									"example": "VIP",
+									"description": "Service Queue Name or category"
+								},
+								"startdate": {
+									"type": "string",
+									"format": "date",
+									"example": "2025-06-12",
+									"description": "Start date for fetching availability (YYYY-MM-DD)"
+								},
+								"daysahead": {
+									"type": "integer",
+									"example": 3,
+									"description": "Number of days ahead from the start date to fetch slots for"
+								},
+								"lang": {
+									"type": "string",
+									"example": "en",
+									"description": "Optional language code for localized responses"
+								}
+							}
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "Successful response with slot availability",
+						"schema": {
+							"type": "object",
+							"properties": {
+								"responseCode": {
+									"type": "integer",
+									"example": 200
+								},
+								"status": {
+									"type": "string",
+									"example": "Success"
+								},
+								"message": {
+									"type": "string",
+									"example": "Data successfully fetched"
+								},
+								"transactionID": {
+									"type": "string",
+									"example": "f09ad479d3d44012a9507bead6b96fa320250612101544190"
+								},
+								"data": {
+									"type": "array",
+									"items": {
+										"type": "object",
+										"properties": {
+											"date": {
+												"type": "string",
+												"example": "06/14/2025"
+											},
+											"dayID": {
+												"type": "string",
+												"example": "6"
+											},
+											"slotDetail": {
+												"type": "array",
+												"items": {
+													"type": "object",
+													"properties": {
+														"slotId": {
+															"type": "string",
+															"example": "4030"
+														},
+														"slotCaption": {
+															"type": "string",
+															"example": "00:20-00:50"
+														},
+														"slotStartTime": {
+															"type": "string",
+															"example": "00:20"
+														},
+														"slotEndTime": {
+															"type": "string",
+															"example": "00:50"
+														},
+														"totalSlots": {
+															"type": "integer",
+															"example": 10
+														},
+														"availableSlots": {
+															"type": "integer",
+															"example": 9
+														},
+														"bookedSlots": {
+															"type": "integer",
+															"example": 1
+														}
+													}
+												}
+											}
+										}
+									}
+								}
+							}
+						}
+					},
+					"default": {
+						"description": "Unexpected error",
+						"schema": {
+							"type": "object",
+							"properties": {
+								"responseCode": {
+									"type": "integer",
+									"example": 500
+								},
+								"status": {
+									"type": "string",
+									"example": "Error"
+								},
+								"message": {
+									"type": "string",
+									"example": "Internal server error"
+								}
+							}
+						}
+					}
+				}
+			}
+		},
+		"/api/appointment/density/service/{serviceID}/{year}/{month}": {
+			"get": {
+				"tags": ["Appointment"],
+				"summary": "Get appointment density for a service",
+				"description": "Returns an array of daily appointment density codes for a given service ID, year, and month.",
+				"parameters": [
+					{
+						"name": "serviceID",
+						"in": "path",
+						"required": true,
+						"type": "string",
+						"description": "Service identifier"
+					},
+					{
+						"name": "year",
+						"in": "path",
+						"required": true,
+						"type": "string",
+						"description": "Year (e.g., 2025)"
+					},
+					{
+						"name": "month",
+						"in": "path",
+						"required": true,
+						"type": "string",
+						"description": "Month (1–12)"
+					},
+					{
+						"name": "accept-language",
+						"in": "header",
+						"required": false,
+						"type": "string",
+						"description": "Language code for localization (e.g., en, ur)"
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "Density data per day",
+						"schema": {
+							"type": "object",
+							"properties": {
+								"responseCode": {
+									"type": "integer",
+									"example": 200
+								},
+								"status": {
+									"type": "string",
+									"example": "Success"
+								},
+								"message": {
+									"type": "string",
+									"example": "Appointment density data retrieved successfully."
+								},
+								"transactionID": {
+									"type": "string",
+									"example": "UUID or hash"
+								},
+								"data": {
+									"type": "array",
+									"items": {
+										"type": "integer"
+									},
+									"example": [
+										0, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4,
+										4, 4, 4, 4, 4, 4, 4, 4, 4, 4
+									]
+								}
+							}
+						}
+					},
+					"400": {
+						"description": "Missing or invalid parameters"
+					},
+					"500": {
+						"description": "Internal server error"
+					}
+				}
+			}
+		},
+		"/api/repeatcallticket": {
+			"post": {
+				"tags": ["Ticket"],
+				"description": "Repeat call for a ticket on a specific branch and counter",
+				"parameters": [
+					{
+						"name": "body",
+						"in": "body",
+						"schema": {
+							"type": "object",
+							"properties": {
+								"branchid": {
+									"type": "string",
+									"example": "123"
+								},
+								"counterid": {
+									"type": "string",
+									"example": "5"
+								},
+								"lang": {
+									"type": "string",
+									"example": "en"
+								},
+								"transactionid": {
+									"type": "string",
+									"example": "TICKET_REPEAT_1_60_20250612120551966"
+								},
+								"userid": {
+									"type": "string",
+									"example": "1"
+								}
+							},
+							"required": ["branchid", "counterid"]
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "Repeat call ticket processed successfully",
+						"schema": {
+							"type": "object",
+							"properties": {
+								"responseCode": {
+									"type": "integer",
+									"example": 200
+								},
+								"status": {
+									"type": "string",
+									"example": "Success"
+								},
+								"message": {
+									"type": "string",
+									"example": "Repeat Call Ticket Completed Successfully"
+								},
+								"transactionID": {
+									"type": "string",
+									"example": "TICKET_REPEAT_1_60_20250612120551966"
+								},
+								"data": {
+									"type": "object",
+									"properties": {
+										"current_counter_status": {
+											"type": "object",
+											"properties": {
+												"ticket_origin": {
+													"type": "string",
+													"example": "webticket"
+												},
+												"ticket_number": {
+													"type": "string",
+													"example": "0011"
+												},
+												"ticket_number_f": {
+													"type": "string",
+													"example": "CA011"
+												},
+												"category_name": {
+													"type": "string",
+													"example": "VIP"
+												},
+												"profile_name": {
+													"type": "string",
+													"example": "Overflow_SM"
+												},
+												"state": {
+													"type": "string",
+													"example": "COUNTER_SERVING"
+												}
+											}
+										}
+									}
+								}
+							}
+						}
+					},
+					"400": {
+						"description": "Missing or invalid input parameters",
+						"schema": {
+							"type": "object",
+							"properties": {
+								"responseCode": {
+									"type": "integer",
+									"example": 400
+								},
+								"status": {
+									"type": "string",
+									"example": "Bad Request"
+								},
+								"message": {
+									"type": "string",
+									"example": "Invalid parameters"
+								},
+								"transactionID": {
+									"type": "string",
+									"example": "TICKET_REPEAT_1_60_20250612120551966"
+								}
+							}
+						}
+					},
+					"404": {
+						"description": "Branch not found or request failed",
+						"schema": {
+							"type": "object",
+							"properties": {
+								"responseCode": {
+									"type": "integer",
+									"example": 404
+								},
+								"status": {
+									"type": "string",
+									"example": "Error"
+								},
+								"message": {
+									"type": "string",
+									"example": "Branch validation failed"
+								},
+								"transactionID": {
+									"type": "string",
+									"example": "TICKET_REPEAT_1_60_20250612120551966"
+								}
+							}
+						}
+					},
+					"409": {
+						"description": "Duplicate request (already processed)",
+						"schema": {
+							"type": "object",
+							"properties": {
+								"responseCode": {
+									"type": "integer",
+									"example": 409
+								},
+								"status": {
+									"type": "string",
+									"example": "Conflict"
+								},
+								"message": {
+									"type": "string",
+									"example": "Request has been already processed"
+								},
+								"transactionID": {
+									"type": "string",
+									"example": "TICKET_REPEAT_1_60_20250612120551966"
+								}
+							}
+						}
+					},
+					"500": {
+						"description": "Internal server error",
+						"schema": {
+							"type": "object",
+							"properties": {
+								"responseCode": {
+									"type": "integer",
+									"example": 500
+								},
+								"status": {
+									"type": "string",
+									"example": "Error"
+								},
+								"message": {
+									"type": "string",
+									"example": "An error occurred while processing the Repeat Call Ticket Request"
+								},
+								"transactionID": {
+									"type": "string",
+									"example": "TICKET_REPEAT_1_60_20250612120551966"
+								}
+							}
+						}
+					}
+				}
+			}
+		},
+		"/api/changelanguageticket": {
+			"post": {
+				"tags": ["Ticket"],
+				"summary": "Change ticket language",
+				"description": "Changes the display language for one or more tickets. Validates the target language code against the database (case-insensitive match on Code column) and sends the change request to the engine via RabbitMQ.",
+				"parameters": [
+					{
+						"name": "body",
+						"in": "body",
+						"required": true,
+						"schema": {
+							"type": "object",
+							"properties": {
+								"branchid": {
+									"type": "integer",
+									"example": 64,
+									"description": "ID of the branch where tickets were issued"
+								},
+								"ticket_ids": {
+									"type": "array",
+									"items": {
+										"type": "integer"
+									},
+									"example": [114768, 114769],
+									"description": "Array of ticket IDs to change language for (max 1, positive integers only)"
+								},
+								"target_language": {
+									"type": "string",
+									"example": "En",
+									"description": "Target language code (case-insensitive, matched against Code column in eqportal_language table)"
+								},
+								"counter_id": {
+									"type": "integer",
+									"example": 64,
+									"description": "Counter ID of the operator performing the action"
+								},
+								"lang": {
+									"type": "string",
+									"example": "en",
+									"description": "Language code for API response messages (default: en)"
+								},
+								"transactionid": {
+									"type": "string",
+									"example": "",
+									"description": "Optional transaction ID for tracking"
+								}
+							},
+							"required": [
+								"branchid",
+								"ticket_ids",
+								"target_language",
+								"counter_id"
+							]
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "Success or Failure (check status field)",
+						"schema": {
+							"type": "object",
+							"properties": {
+								"responseCode": {
+									"type": "integer",
+									"example": 200
+								},
+								"status": {
+									"type": "string",
+									"example": "Success"
+								},
+								"message": {
+									"type": "string",
+									"example": "Language changed successfully"
+								},
+								"transactionID": {
+									"type": "string",
+									"example": "abc-123"
+								},
+								"data": {
+									"type": "object",
+									"properties": {
+										"current_counter_status": {
+											"type": "object",
+											"properties": {
+												"ticket_origin": {
+													"type": "string",
+													"example": "kiosk"
+												},
+												"category_name": {
+													"type": "string",
+													"example": "JTL"
+												},
+												"current_session_id": {
+													"type": "string",
+													"example": "acdbda5d54d21787770741367"
+												},
+												"ticket_number_f": {
+													"type": "string",
+													"example": "J0001"
+												},
+												"ticket_priority": {
+													"type": "integer",
+													"example": 0
+												},
+												"ticket_prefix": {
+													"type": "string",
+													"example": "J"
+												},
+												"ticket_category_id": {
+													"type": "integer",
+													"example": 10
+												},
+												"profile_name": {
+													"type": "string",
+													"example": "Fifo"
+												},
+												"category_id": {
+													"type": "integer",
+													"example": 10
+												},
+												"activity_id": {
+													"type": "integer",
+													"example": 0
+												},
+												"state": {
+													"type": "string",
+													"example": "COUNTER_CALLING"
+												},
+												"ticket_number_f1": {
+													"type": "string",
+													"example": "J0001"
+												},
+												"total_transaction": {
+													"type": "integer",
+													"example": 0
+												},
+												"ticket_number": {
+													"type": "string",
+													"example": "0001"
+												},
+												"ticket_id": {
+													"type": "integer",
+													"example": 1712
+												},
+												"ticket_category_name": {
+													"type": "string",
+													"example": "JTL"
+												},
+												"category_title": {
+													"type": "string",
+													"example": "Join The Line"
+												},
+												"category_translations": {
+													"type": "object",
+													"example": {
+														"rtl@Arabic": "Join the line in Arabic",
+														"ltr@Spanish": "Join the line in Spanish",
+														"ltr@French": "Join the line in French"
+													}
+												},
+												"ticket_payload": {
+													"type": "array",
+													"items": {
+														"type": "string"
+													},
+													"example": [""]
+												},
+												"is_transferred": {
+													"type": "integer",
+													"example": 0
+												},
+												"profile_id": {
+													"type": "integer",
+													"example": 561
+												},
+												"is_matter_required": {
+													"type": "integer",
+													"example": 0
+												},
+												"selected_matters": {
+													"type": "array",
+													"items": {}
+												},
+												"ticket_journey": {
+													"type": "string",
+													"example": ""
+												},
+												"transfer_reason": {
+													"type": "string",
+													"example": ""
+												}
+											}
+										}
+									}
+								}
+							}
+						},
+						"examples": {
+							"application/json": {
+								"Success": {
+									"value": {
+										"responseCode": 200,
+										"status": "Success",
+										"message": "Language changed successfully",
+										"transactionID": "txn-001",
+										"data": {
+											"current_counter_status": {}
+										}
+									}
+								},
+								"Branch Does not exist": {
+									"value": {
+										"responseCode": 200,
+										"status": "Failure",
+										"message": "Branch Does not exist",
+										"transactionID": "txn-001",
+										"data": []
+									}
+								}
+							}
+						}
+					},
+					"400": {
+						"description": "Bad Request - Missing required parameters, invalid format, or too many tickets",
+						"schema": {
+							"type": "object",
+							"properties": {
+								"status": {
+									"type": "string",
+									"example": "Error"
+								},
+								"message": {
+									"type": "string",
+									"example": "Invalid parameters"
+								},
+								"transactionID": {
+									"type": "string",
+									"example": ""
+								},
+								"data": {
+									"type": "array",
+									"items": {}
+								}
+							}
+						}
+					},
+					"404": {
+						"description": "Not Found - Language, Ticket, Counter, or Counter Not Opened",
+						"schema": {
+							"type": "object",
+							"properties": {
+								"responseCode": {
+									"type": "integer",
+									"example": 404
+								},
+								"status": {
+									"type": "string",
+									"example": "Error"
+								},
+								"message": {
+									"type": "string",
+									"example": "Language not found"
+								},
+								"transactionID": {
+									"type": "string",
+									"example": "txn-001"
+								},
+								"data": {
+									"type": "array",
+									"items": {}
+								}
+							}
+						},
+						"examples": {
+							"application/json": {
+								"Language not found": {
+									"value": {
+										"responseCode": 404,
+										"status": "Error",
+										"message": "Language not found",
+										"transactionID": "txn-001",
+										"data": []
+									}
+								},
+								"Ticket not found": {
+									"value": {
+										"responseCode": 404,
+										"status": "Error",
+										"message": "Ticket not found",
+										"transactionID": "txn-001",
+										"data": []
+									}
+								},
+								"Counter not found": {
+									"value": {
+										"responseCode": 404,
+										"status": "Error",
+										"message": "Counter not found",
+										"transactionID": "txn-001",
+										"data": []
+									}
+								},
+								"Counter not opened": {
+									"value": {
+										"responseCode": 404,
+										"status": "Error",
+										"message": "Counter not opened",
+										"transactionID": "txn-001",
+										"data": []
+									}
+								}
+							}
+						}
+					},
+					"409": {
+						"description": "Request already processed",
+						"schema": {
+							"type": "object",
+							"properties": {
+								"status": {
+									"type": "string",
+									"example": "Error"
+								},
+								"message": {
+									"type": "string",
+									"example": "Request has already been processed"
+								},
+								"transactionID": {
+									"type": "string",
+									"example": "txn-001"
+								},
+								"data": {
+									"type": "array",
+									"items": {}
+								}
+							}
+						}
+					},
+					"500": {
+						"description": "Internal Server Error",
+						"schema": {
+							"type": "object",
+							"properties": {
+								"status": {
+									"type": "string",
+									"example": "Error"
+								},
+								"message": {
+									"type": "string",
+									"example": "An error occurred while changing language"
+								},
+								"transactionID": {
+									"type": "string",
+									"example": "txn-001"
+								},
+								"data": {
+									"type": "array",
+									"items": {}
+								}
+							}
+						}
+					}
+				}
+			}
+		},
+		"/api/processcustomerappointmentdata": {
+			"post": {
+				"tags": ["Appointment"],
+				"summary": "Process customer appointment data",
+				"description": "Archives customer appointment data to backup database and removes from live tables.",
+				"parameters": [
+					{
+						"name": "body",
+						"in": "body",
+						"required": true,
+						"schema": {
+							"type": "object",
+							"properties": {
+								"customer_ids": {
+									"type": "array",
+									"items": {
+										"type": "string"
+									},
+									"example": ["CUST-001", "CUST-002"],
+									"description": "Array of customer IDs to process"
+								},
+								"lang": {
+									"type": "string",
+									"example": "en",
+									"description": "Response language code. Default: en"
+								},
+								"transactionid": {
+									"type": "string",
+									"example": "txn-001",
+									"description": "Optional transaction ID for tracking"
+								}
+							},
+							"required": ["customer_ids"]
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "Success",
+						"schema": {
+							"type": "object",
+							"properties": {
+								"responseCode": {
+									"type": "integer",
+									"example": 200
+								},
+								"status": {
+									"type": "string",
+									"example": "Success"
+								},
+								"message": {
+									"type": "string",
+									"example": "Appointment data processed successfully"
+								},
+								"transactionID": {
+									"type": "string",
+									"example": "txn-001"
+								},
+								"data": {
+									"type": "object",
+									"properties": {
+										"recordsProcessed": {
+											"type": "integer",
+											"example": 12
+										}
+									}
+								}
+							}
+						}
+					},
+					"400": {
+						"description": "Bad Request - Missing or invalid customer_ids",
+						"schema": {
+							"type": "object",
+							"properties": {
+								"responseCode": {
+									"type": "integer",
+									"example": 400
+								},
+								"status": {
+									"type": "string",
+									"example": "Error"
+								},
+								"message": {
+									"type": "string",
+									"example": "Invalid parameters"
+								},
+								"transactionID": {
+									"type": "string",
+									"example": "txn-001"
+								},
+								"data": {
+									"type": "array",
+									"items": {}
+								}
+							}
+						}
+					},
+					"404": {
+						"description": "Not Found - No appointment data for this customer",
+						"schema": {
+							"type": "object",
+							"properties": {
+								"responseCode": {
+									"type": "integer",
+									"example": 404
+								},
+								"status": {
+									"type": "string",
+									"example": "Error"
+								},
+								"message": {
+									"type": "string",
+									"example": "No appointment data found for this customer"
+								},
+								"transactionID": {
+									"type": "string",
+									"example": "txn-001"
+								},
+								"data": {
+									"type": "array",
+									"items": {}
+								}
+							}
+						}
+					},
+					"500": {
+						"description": "Internal Server Error",
+						"schema": {
+							"type": "object",
+							"properties": {
+								"responseCode": {
+									"type": "integer",
+									"example": 500
+								},
+								"status": {
+									"type": "string",
+									"example": "Error"
+								},
+								"message": {
+									"type": "string",
+									"example": "An error occurred while processing appointment data"
+								},
+								"transactionID": {
+									"type": "string",
+									"example": "txn-001"
+								},
+								"data": {
+									"type": "array",
+									"items": {}
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	},
+	"security": [
+		{
+			"BearerAuth": []
+		},
+		{
+			"SIDHeader": []
+		}
+	]
+}
